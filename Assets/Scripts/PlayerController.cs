@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;   //allows you to customize input via script
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController Instance { get; private set; }        //adds singleton for easy reference esp between levels,, NOTE: ONLY works if there is only one player
+
     [Header("Movement")]
     public float moveSpeed = 7.5f;
     public float sprintSpeed = 11.5f;
@@ -40,15 +42,19 @@ public class PlayerController : MonoBehaviour
     public float pStamMax = 100;
     public float runCost = 5f;   //stam points per sec while sprinting ( stam * Time.deltaTime )
     public float jumpCost = 10f;      //stam cost to jump
-    public float regenRate = 10f;         //stam in sec (after delay, rR * Time.deltaTime)
-    public float regenDelay = 0.75f;  //how long it takes for stam to begin regennin
-    public float minRun = 5f;    //min stam to run,, cant if empty
-    public float minJump = 5f;   //same as above
-    float lastUse;  // last time stamina was spent
-    bool isRunning;
+    //public float regenDelay = 0.75f;  //how long it takes for stam to begin regen
+    public float stamRegen = 5f;      //how much stam is regen'd /sec
+    //float lastUse;  // last time stamina was spent
+    //bool isRunning;
     bool canJump;
+    [HideInInspector] public int dmgToPC;    
+
+    
     void Awake()
     {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;            //needed for other scripts to easily reference the player
+
         // Move: WASD + gamepad left stick
         moveAction = new InputAction("Move", binding: "<Gamepad>/leftStick");
         moveAction.AddCompositeBinding("2DVector")
@@ -70,9 +76,10 @@ public class PlayerController : MonoBehaviour
         pStam = pStamMax;
         pSanity = pSanityMax;
         canJump = true;
-    }
 
-    void OnEnable()
+        stamRegen = 5f;        //fuck me dude i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
+    }
+        void OnEnable()
     {
         moveAction.Enable();
         lookAction.Enable();
@@ -97,10 +104,12 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = false;
     }
 
-    void Update()
+    void Update()           //half of this movement controller was pulled off google then modified fyi
     {
 
-        if (pStam < 0) pStam = 0;
+        if (pStam < 0) pStam = 0;       //makes sure no neg stam
+        if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
+
         // 1) Ground check first
         bool grounded = characterController.isGrounded;
 
@@ -118,7 +127,7 @@ public class PlayerController : MonoBehaviour
         moveDirection = (fwd * moveInput.y + right * moveInput.x) * speed;
 
         // 4) Jump (press once while grounded)
-        if (grounded && canMove && jumpAction.WasPressedThisFrame() && canJump)
+        if (grounded && canMove && jumpAction.WasPressedThisFrame() && canJump && (pStam >= 10))       //jump checks 
         {
             moveDirection.y = jumpSpeed;
             pStam -= jumpCost;
@@ -140,7 +149,6 @@ public class PlayerController : MonoBehaviour
         // 7) Mouse/Gamepad look (pitch on camera, yaw on body)
         if (canMove)
         {
-            // Note: mouse delta is already per-frame; no Time.deltaTime here
             float yawDelta = lookInput.x * lookSpeed;
             float pitchDelta = -lookInput.y * lookSpeed;
             rotationX = Mathf.Clamp(rotationX + pitchDelta, -lookXLimit, lookXLimit);
@@ -148,17 +156,29 @@ public class PlayerController : MonoBehaviour
             transform.rotation *= Quaternion.Euler(0f, yawDelta, 0f);
         }
 
-        if (isRunning && pStam > 0f)                   // same outer guard
+        if (isRunning && pStam > 5f)
         {
-            // use the new Input System, not Input.GetKey
-            if (runAction.IsPressed())                            // CHANGED
+            if (runAction.IsPressed())    //runnin runnin an runnin runnin                           
             {
                 pStam -= runCost * Time.deltaTime;
                 if (pStam < 0f) pStam = 0f;
             }
         }
+
+        if (!isRunning && grounded && (pStam < pStamMax) && (speed == moveSpeed))     //checks these conditions before running regen
+        {
+            pStam += stamRegen * Time.deltaTime;   //sets stam regen /sec
+        }
+    }
+
+    public void TakeDmg()    //ksobasically,, other scripts call this method BUT then feed in its own dmg values and such,, OH HAHA except not bc its also smoking crack! now this just handles visuals!
+    {
+        pHP -= dmgToPC;
+        Debug.Log("Player hp: " + pHP);
     }
 }
+
+
 
 
 
