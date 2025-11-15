@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.InputSystem;   //allows you to customize input via script
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    public static PlayerController Instance { get; private set; }        //adds singleton for easy reference esp between levels,, NOTE: ONLY works if there is only one player
+    public static PlayerController Instance { get; private set; }        //adds singleton for easy reference esp between levels
 
     [Header("Movement")]
     public float moveSpeed = 5.5f;
@@ -40,6 +42,7 @@ public class PlayerController : MonoBehaviour
     public int pHP = 100;
     public int pHPMax = 100;
     bool canDmg;
+    public string LevelOnDeath;
 
     [Header("Sanity")]
     public float pSanity = 100;
@@ -85,6 +88,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;            //needed for other scripts to easily reference the player
+        DontDestroyOnLoad(gameObject);        //WE PERSIST
 
         // Move: WASD + gamepad left stick
         moveAction = new InputAction("Move", binding: "<Gamepad>/leftStick");
@@ -204,7 +208,12 @@ public class PlayerController : MonoBehaviour
             sanityLost = true;         // mark as shown until above 5
         }
 
-
+        if (pHP < 1 || pSanity < 1)      //gg
+        {
+           if (SceneManager.GetActiveScene().name == "Level1") { LevelOnDeath = "Level1";  }  //needed to tell lose scene where to reload
+           if (SceneManager.GetActiveScene().name == "Level2") { LevelOnDeath = "Level2";  }
+            SceneManager.LoadScene("LostGG");
+        }
         if (pStam < 1) pStam = 0;       //makes sure no neg stam
         if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
         if (pHP > pHPMax) pHP = pHPMax;

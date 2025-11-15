@@ -41465,7 +41465,7 @@ GameObject:
   - component: {fileID: 5586165088485794351}
   - component: {fileID: 2818785738876728851}
   m_Layer: 0
-  m_Name: indoors
+  m_Name: Indoors
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -42744,11 +42744,11 @@ SceneRoots:
   - {fileID: 333013676962383403}
   - {fileID: 7644109663328099486}
   - {fileID: 5596808701907603653}
+  - {fileID: 1481852203262719723}
   - {fileID: 100678637723023184}
+  - {fileID: 3002378316832613752}
   - {fileID: 7452633709533745899}
   - {fileID: 7248990444105749733}
-  - {fileID: 1481852203262719723}
-  - {fileID: 3002378316832613752}
   - {fileID: 2250261332623313410}
   - {fileID: 193247843}
   - {fileID: 9053773817927799871}
