@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public static PlayerController Instance { get; private set; }        //adds singleton for easy reference esp between levels,, NOTE: ONLY works if there is only one player
 
     [Header("Movement")]
-    public float moveSpeed = 7.5f;
+    public float moveSpeed = 5.5f;
     public float sprintSpeed = 11.5f;
     public float jumpSpeed = 8.0f;
     public float gravity = 20.0f;
@@ -34,20 +34,19 @@ public class PlayerController : MonoBehaviour
     [Header("Stats")]
     public int pHP = 100;
     public int pHPMax = 100;
-    public int pSanity = 100;
-    public int pSanityMax = 100;
+    public float pSanity = 100;
+    public float pSanityMax = 100;
+    public float pSanityRegen = 2;
 
     [Header("Stamina")]     //these can all be tweaked as needed in inspector
     public float pStam = 100;
     public float pStamMax = 100;
     public float runCost = 5f;   //stam points per sec while sprinting ( stam * Time.deltaTime )
     public float jumpCost = 10f;      //stam cost to jump
-    //public float regenDelay = 0.75f;  //how long it takes for stam to begin regen
-    public float stamRegen = 5f;      //how much stam is regen'd /sec
-    //float lastUse;  // last time stamina was spent
-    //bool isRunning;
+    public float stamRegen = 2f;      //how much stam is regen'd /sec,, its not actually changed by this value. unity just likes to smoke crack. idfk.
     bool canJump;
-    [HideInInspector] public int dmgToPC;    
+    [HideInInspector] public int dmgToPC;
+    [HideInInspector] public bool canRegenSanity;    //stops player from getting sanity regen while actively facing horrors
 
     
     void Awake()
@@ -77,7 +76,7 @@ public class PlayerController : MonoBehaviour
         pSanity = pSanityMax;
         canJump = true;
 
-        stamRegen = 5f;        //fuck me dude i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
+        stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
     }
         void OnEnable()
     {
@@ -109,14 +108,16 @@ public class PlayerController : MonoBehaviour
 
         if (pStam < 0) pStam = 0;       //makes sure no neg stam
         if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
-
+        if (pHP > pHPMax) pHP = pHPMax;
+        if (pSanity > pSanityMax) pSanity = pSanityMax;
         // 1) Ground check first
         bool grounded = characterController.isGrounded;
 
         // 2) Read inputs (new Input System)
         Vector2 moveInput = canMove ? moveAction.ReadValue<Vector2>() : Vector2.zero;
         Vector2 lookInput = canMove ? lookAction.ReadValue<Vector2>() : Vector2.zero;
-        bool isRunning = canMove && runAction.IsPressed();
+        bool isRunning = canMove && runAction.IsPressed() && pStam >= 5;    //RUNTIMEBOIS,, checks these conditions to see if player can run
+        if (!isRunning && canMove && runAction.WasPressedThisFrame() && pStam < 5f) FeedbackBanner.Instance.Show("I'm too tired to run.");
 
         // 3) Build world-space planar velocity,, checks for run,, also do not ask me what this means all ik is that it works
         float speed = isRunning ? sprintSpeed : moveSpeed;    //This uses the ternary operator. If isRunning is true, speed = sprintSpeed; otherwise speed = moveSpeed.
@@ -133,7 +134,12 @@ public class PlayerController : MonoBehaviour
             pStam -= jumpCost;
         }
         else
+        {
             moveDirection.y = vy;
+        }
+
+        if (grounded && canMove && jumpAction.WasPressedThisFrame() && pStam < 10f)
+            FeedbackBanner.Instance.Show("I'm too tired to jump.");
 
         // Optional: keep controller “stuck” to ground/slopes
         if (grounded && moveDirection.y < 0f)
@@ -156,26 +162,38 @@ public class PlayerController : MonoBehaviour
             transform.rotation *= Quaternion.Euler(0f, yawDelta, 0f);
         }
 
-        if (isRunning && pStam > 5f)
+        if (isRunning)         //draim stam :3
         {
-            if (runAction.IsPressed())    //runnin runnin an runnin runnin                           
-            {
-                pStam -= runCost * Time.deltaTime;
-                if (pStam < 0f) pStam = 0f;
-            }
+            pStam -= runCost * Time.deltaTime;
+            if (pStam < 0f) pStam = 0f;
         }
 
         if (!isRunning && grounded && (pStam < pStamMax) && (speed == moveSpeed))     //checks these conditions before running regen
         {
             pStam += stamRegen * Time.deltaTime;   //sets stam regen /sec
         }
+
+        if ((pSanity < pSanityMax) && canRegenSanity)     //checks these conditions before running regen
+        {
+            pSanity += pSanityRegen * Time.deltaTime;   //sets stam regen /sec
+        }
     }
 
-    public void TakeDmg()    //ksobasically,, other scripts call this method BUT then feed in its own dmg values and such,, OH HAHA except not bc its also smoking crack! now this just handles visuals!
+    public void TakeDmg()    //ksobasically,, other scripts call this method BUT then feed in its own dmg values and such if things actually like..... work right. which they aren't. might just end up being for visuals.
     {
         pHP -= dmgToPC;
         Debug.Log("Player hp: " + pHP);
     }
+
+
+    //void OnTriggerEnter(Collider other)
+    //{
+    //    if (other.CompareTag("Lightbulb"))
+    //    {
+    //        InventoryController.flashLightCharges++;
+    //        Destroy(other.gameObject);
+    //    }
+    //}
 }
 
 

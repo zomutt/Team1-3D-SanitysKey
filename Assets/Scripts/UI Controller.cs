@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
 using UnityEngine.UIElements;
+using System.Collections;
 
 public class UIController : MonoBehaviour
 {
@@ -9,10 +9,15 @@ public class UIController : MonoBehaviour
     public TMP_Text stamText;
     public TMP_Text sanityText;
     public PlayerController PlayerController;
-    public float pHP, pStam, pSanity;
+    public float pHP, pStam, pSanity, flLife;
     string string_hp;
     string string_stam;
     string string_sanity;
+    string string_fl;
+    public Image FeedbackBG;
+    public TextMeshProUGUI flLifeText;
+    public InventoryController InventoryController;
+
 
     void Start()
     {
@@ -21,21 +26,20 @@ public class UIController : MonoBehaviour
     }
 
     void Update()
-    {                                      //some tedious ass shit i coulda probably done more efficiently but fuck it we ball
+    {                                      
         pHP = PlayerController.pHP;
         pStam = PlayerController.pStam;
         pSanity = PlayerController.pSanity;
-        
+        flLife = InventoryController.flLife;
+
         string_hp = pHP.ToString();                 
         string_stam = pStam.ToString();
         string_sanity = pSanity.ToString();
+        string_fl = flLife.ToString();
 
-
-       // healthText.text = "Health: " + string_hp;
-        healthText.text = "Health: " + PlayerController.pHP.ToString("F0");         //gets rid of the decimals
-        //stamText.text = "Stamina: " + string_stam;
-        stamText.text = "Stamina: " + PlayerController.pStam.ToString("F0");
-        //sanityText.text = "Sanity :" + string_sanity;
-        sanityText.text = "Sanity :" + PlayerController.pSanity.ToString("F0");
+        healthText.text = "Health: " + PlayerController.pHP.ToString("F0") + "%";         //gets rid of the decimals,, whole num only for display while letting everything function as a float. i am big brain.
+        stamText.text = "Stamina: " + PlayerController.pStam.ToString("F0") + "%";  //f = fixed-point format (reg decimal number), 0 = amt of decimal places to show :) 
+        sanityText.text = "Sanity :" + PlayerController.pSanity.ToString("F0") + "%";
+        flLifeText.text = InventoryController.flLife.ToString("F0") + "%";
     }
 }

@@ -20,7 +20,7 @@ public class Hazard : MonoBehaviour
     {
         if (other.CompareTag("Player") && canDealDmg)
         {
-            int dmgGiven = 10;        //putting it downhere bc of this dogshit program
+            int dmgGiven = 10;        //putting it down here bc god hates me
             Debug.Log("Dmg given: " + dmgGiven);
             Debug.Log(":3 uwu nuzzles (touches)");
             PlayerController.dmgToPC = dmgGiven;
@@ -33,7 +33,7 @@ public class Hazard : MonoBehaviour
     {
         canDealDmg = false;
         Debug.Log("Can dmg: " + canDealDmg);
-        yield return new WaitForSeconds(1.5f);          //yea again for some reason i'd MUCH rather not hard code this but fuck me ig its either this or instantaneous death
+        yield return new WaitForSeconds(1.5f);          //yea again for some reason i'd MUCH rather not hard code this value but ig its either this or instantaneous death
         canDealDmg = true;
         Debug.Log("Can dmg: " + canDealDmg);
     }
