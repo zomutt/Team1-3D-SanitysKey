@@ -20,16 +20,21 @@ public class PlayerController : MonoBehaviour
     public float lookXLimit = 45.0f;   // clamp vertical look
 
     CharacterController characterController;
+    public InventoryController InventoryController;
     Vector3 moveDirection = Vector3.zero;
     float rotationX = 0f;
     [HideInInspector] public bool canMove = true;
 
+    [Header("Damage")]
+    [SerializeField] HurtOverlay HurtOverlay;   
+
     //Input Actions (created in code, no PlayerInput needed)
+    [Header("InputActions")]
     InputAction moveAction;
     InputAction lookAction;
     InputAction jumpAction;
     InputAction runAction;
-
+    InputAction interactAction;
 
     [Header("Stats")]
     public int pHP = 100;
@@ -37,6 +42,7 @@ public class PlayerController : MonoBehaviour
     public float pSanity = 100;
     public float pSanityMax = 100;
     public float pSanityRegen = 2;
+    bool canDmg;
 
     [Header("Stamina")]     //these can all be tweaked as needed in inspector
     public float pStam = 100;
@@ -48,7 +54,13 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public int dmgToPC;
     [HideInInspector] public bool canRegenSanity;    //stops player from getting sanity regen while actively facing horrors
 
-    
+    [Header("Interaction")]
+    [SerializeField] float interactRange = 3f;
+    [SerializeField] string[] interactableTags;          // tags that count as interactable
+    [SerializeField] CrosshairController CrosshairController;
+
+    [Header("Interaction UI")]
+    Collider currentAimCollider;
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -70,13 +82,19 @@ public class PlayerController : MonoBehaviour
         // Jump / Run
         jumpAction = new InputAction("Jump", binding: "<Keyboard>/space");
         runAction = new InputAction("Run", binding: "<Keyboard>/leftShift");
+        // Interact: left mouse button (*MIGHT* swap to E later, tbd)
+        interactAction = new InputAction("Interact");
+        interactAction.AddBinding("<Mouse>/rightButton");
 
         pHP = pHPMax;         //makes sure she's at full stats upon awake
         pStam = pStamMax;
         pSanity = pSanityMax;
         canJump = true;
+        canDmg = true;
 
         stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
+
+        characterController = GetComponent<CharacterController>();
     }
         void OnEnable()
     {
@@ -84,6 +102,7 @@ public class PlayerController : MonoBehaviour
         lookAction.Enable();
         jumpAction.Enable();
         runAction.Enable();
+        interactAction.Enable();
     }
 
     void OnDisable()
@@ -92,6 +111,7 @@ public class PlayerController : MonoBehaviour
         lookAction.Disable();
         jumpAction.Disable();
         runAction.Disable();
+        interactAction.Disable();
     }
 
     void Start()
@@ -103,10 +123,22 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = false;
     }
 
+    bool IsInteractableTag(string tagToCheck)
+    {
+        for (int index = 0; index < interactableTags.Length; index++)
+        {
+            if (tagToCheck == interactableTags[index])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void Update()           //half of this movement controller was pulled off google then modified fyi
     {
 
-        if (pStam < 0) pStam = 0;       //makes sure no neg stam
+        if (pStam < 1) pStam = 0;       //makes sure no neg stam
         if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
         if (pHP > pHPMax) pHP = pHPMax;
         if (pSanity > pSanityMax) pSanity = pSanityMax;
@@ -177,26 +209,105 @@ public class PlayerController : MonoBehaviour
         {
             pSanity += pSanityRegen * Time.deltaTime;   //sets stam regen /sec
         }
+
+
+        UpdateAimTarget();   //make sure this stays at end of Update method
+        UpdateAimTarget();
+        HandleInteraction();
+
     }
 
-    public void TakeDmg()    //ksobasically,, other scripts call this method BUT then feed in its own dmg values and such if things actually like..... work right. which they aren't. might just end up being for visuals.
+    void UpdateAimTarget()           //i found this online so i'm not like.... super... sure how it works, but it feels p straightforward and it works
     {
-        pHP -= dmgToPC;
-        Debug.Log("Player hp: " + pHP);
+        if (playerCamera == null) return;
+
+        Ray cameraRay = new Ray(playerCamera.transform.position,
+                                playerCamera.transform.forward);
+        RaycastHit hitInfo;
+
+        if (Physics.Raycast(cameraRay, out hitInfo, interactRange))
+        {
+            string hitTag = hitInfo.collider.tag;
+
+            if (IsInteractableTag(hitTag))
+            {
+                if (currentAimCollider != hitInfo.collider)
+                {
+                    currentAimCollider = hitInfo.collider;
+                    if (CrosshairController != null)
+                    {
+                        CrosshairController.SetState(CrosshairState.Interactable);
+                    }
+                }
+                return; // still aiming at valid thing
+            }
+        }
+
+        // if we get here, we are NOT aiming at an interactable
+        if (currentAimCollider != null)
+        {
+            currentAimCollider = null;
+            if (CrosshairController != null)
+            {
+                CrosshairController.SetState(CrosshairState.Default);
+            }
+        }
+    }
+    void HandleInteraction()
+    {
+        if (!interactAction.WasPressedThisFrame())
+            return;
+
+        if (currentAimCollider == null)
+            return;
+
+        // Distance check so you can highlight from farther away
+        float distanceToTarget = Vector3.Distance(
+            playerCamera.transform.position,
+            currentAimCollider.transform.position);
+
+        if (distanceToTarget > interactRange)
+        {
+            FeedbackBanner.Instance.Show("It's too far away.");
+            return;
+        }
+
+        GameObject targetObject = currentAimCollider.gameObject;
+
+        if (targetObject.CompareTag("MedPack"))
+        {
+            Debug.Log("Picked up med pack via interact");
+            InventoryController.medCharges++;
+            FeedbackBanner.Instance.Show("This seems useful.");
+            targetObject.SetActive(false);
+        }
+        else if (targetObject.CompareTag("Lightbulb"))
+        {
+            Debug.Log("Picked up lightbulb via interact");
+            InventoryController.bulbCount++;
+            FeedbackBanner.Instance.Show("This might help my flashlight.");
+            targetObject.SetActive(false);
+        }
     }
 
 
-    //void OnTriggerEnter(Collider other)
-    //{
-    //    if (other.CompareTag("Lightbulb"))
-    //    {
-    //        InventoryController.flashLightCharges++;
-    //        Destroy(other.gameObject);
-    //    }
-    //}
+    public void TakeDmg()
+    {
+        if (canDmg)
+        {
+            pHP -= dmgToPC;
+            FeedbackBanner.Instance.Show("I'm hurt!");
+            Debug.Log("Player hp: " + pHP);
+            StartCoroutine(iframe());
+            HurtOverlay.Play();
+        }
+        else { return; }
+    }
+
+    IEnumerator iframe()
+    {
+        canDmg = false;
+        yield return new WaitForSeconds(.75f);
+        canDmg = true;
+    }
 }
-
-
-
-
-

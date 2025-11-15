@@ -20,22 +20,12 @@ public class Hazard : MonoBehaviour
     {
         if (other.CompareTag("Player") && canDealDmg)
         {
-            int dmgGiven = 10;        //putting it down here bc god hates me
-            Debug.Log("Dmg given: " + dmgGiven);
-            Debug.Log(":3 uwu nuzzles (touches)");
+            int dmgGiven = 10;        //putting it down here bc god hates us and tweaks = bad *apparently*
+            //Debug.Log("Dmg given: " + dmgGiven);
             PlayerController.dmgToPC = dmgGiven;
             PlayerController.TakeDmg();
-            StartCoroutine(DMGCooldown());
+            //StartCoroutine(DMGCooldown());
         }
-    }
-
-    IEnumerator DMGCooldown()
-    {
-        canDealDmg = false;
-        Debug.Log("Can dmg: " + canDealDmg);
-        yield return new WaitForSeconds(1.5f);          //yea again for some reason i'd MUCH rather not hard code this value but ig its either this or instantaneous death
-        canDealDmg = true;
-        Debug.Log("Can dmg: " + canDealDmg);
     }
 }
 
