@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 public class MenuManager : MonoBehaviour
 {
     PlayerController PlayerController;
+
+    public GameObject player;
     public GameObject FirstPanel;
     public GameObject ConfirmPanel;
 
@@ -13,21 +15,18 @@ public class MenuManager : MonoBehaviour
         FirstPanel.SetActive(true);
         ConfirmPanel.SetActive(false);
     }
-    public void FirstQuitOnClick()
+    void FirstQuitOnClick()
     {
         FirstPanel.SetActive(false);
         ConfirmPanel.SetActive(true);
     }
 
-    public void PersistOnClick()
+    void PersistOnClick()
     {
-        SceneManager.LoadScene(PlayerController.LevelOnDeath);
-        if (PlayerController.LevelOnDeath == "Level1") { SceneManager.LoadScene("Level1"); }
-        else if (PlayerController.LevelOnDeath == "Level2") { SceneManager.LoadScene("Level2"); }
-        else { Debug.Log("Error fetching scene."); }
+        SceneManager.LoadScene("Level1");
     }
 
-    public void ConfirmQuitOnClick()
+    void ConfirmQuitOnClick()
     {
         SceneManager.LoadScene("MainMenu");
     }

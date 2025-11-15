@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.InputSystem;   //allows you to customize input via script
 using UnityEngine.SceneManagement;
@@ -15,6 +14,7 @@ public class PlayerController : MonoBehaviour
     public float sprintSpeed = 11.5f;
     public float jumpSpeed = 8.0f;
     public float gravity = 20.0f;
+
 
     [Header("Camera")]
     public Camera playerCamera;
@@ -163,7 +163,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    void Update()           //a bit of this movement/character controller was pulled off google then modified fyi
+    void Update()   
     {
         // --- Sanity warning messages ---
 
@@ -208,12 +208,26 @@ public class PlayerController : MonoBehaviour
             sanityLost = true;         // mark as shown until above 5
         }
 
-        if (pHP < 1 || pSanity < 1)      //gg
+        if (pHP < 1 || pSanity < 1)       //GGEZ
         {
-           if (SceneManager.GetActiveScene().name == "Level1") { LevelOnDeath = "Level1";  }  //needed to tell lose scene where to reload
-           if (SceneManager.GetActiveScene().name == "Level2") { LevelOnDeath = "Level2";  }
+            string currentScene = SceneManager.GetActiveScene().name;
+
+            if (currentScene == "Level1")
+            {
+                LevelOnDeath = "Level1";
+            }
+            else if (currentScene == "Level2")
+            {
+                LevelOnDeath = "Level2";
+            }
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
             SceneManager.LoadScene("LostGG");
         }
+
+
         if (pStam < 1) pStam = 0;       //makes sure no neg stam
         if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
         if (pHP > pHPMax) pHP = pHPMax;
@@ -280,11 +294,6 @@ public class PlayerController : MonoBehaviour
         {
             pStam += stamRegen * Time.deltaTime;   //sets stam regen /sec
         }
-
-        //if ((pSanity < pSanityMax) && canRegenSanity)     //checks these conditions before running regen
-        //{
-        //    pSanity += pSanityRegen * Time.deltaTime;   //sets stam regen /sec
-        //}
 
         bool lookingAtEntity = UpdateSanityFacingEntity();   //checks to see if player is directly staring at entity (raycast from cam, returns true/false and handles drain
         bool nearEntity = UpdateSanityProximity();      //checks if any entity is within radius,, allows for slow drain creep
