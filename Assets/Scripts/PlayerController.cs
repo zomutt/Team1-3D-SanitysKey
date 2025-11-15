@@ -36,13 +36,18 @@ public class PlayerController : MonoBehaviour
     InputAction runAction;
     InputAction interactAction;
 
-    [Header("Stats")]
+    [Header("Health")]
     public int pHP = 100;
     public int pHPMax = 100;
+    bool canDmg;
+
+    [Header("Sanity")]
     public float pSanity = 100;
     public float pSanityMax = 100;
     public float pSanityRegen = 2;
-    bool canDmg;
+    public bool sanityWarning;
+    public bool sanityDanger;
+    public bool sanityLost;
 
     [Header("Stamina")]     //these can all be tweaked as needed in inspector
     public float pStam = 100;
@@ -61,6 +66,21 @@ public class PlayerController : MonoBehaviour
 
     [Header("Interaction UI")]
     Collider currentAimCollider;
+
+
+    [Header("Sanity - Entities")]
+    [SerializeField] string entityTag = "Entity";
+
+    [SerializeField] float sanityLookDrainRate = 4f;   // /sec when staring
+    [SerializeField] float sanityLookRange = 15f;  // raycast distance
+    [SerializeField] float sanityNearDrainRate = .5f;   // /sec when near
+    [SerializeField] float sanityNearRadius = 10f;  // sphere radius
+    [HideInInspector] bool proximityMessageShown;   // tracks if we've already shown the "watching me" text
+    [HideInInspector] bool facingEntityMessageShown;   // tracks if we've shown the "staring" line
+
+
+
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -121,6 +141,10 @@ public class PlayerController : MonoBehaviour
         // Lock cursor
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        sanityWarning = false;
+        sanityDanger = false;
+        sanityLost = false;
     }
 
     bool IsInteractableTag(string tagToCheck)
@@ -135,8 +159,51 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    void Update()           //half of this movement controller was pulled off google then modified fyi
+    void Update()           //a bit of this movement/character controller was pulled off google then modified fyi
     {
+        // --- Sanity warning messages ---
+
+        //reset flags once we pass threshold
+        if (pSanity > 40f)
+        {
+            // Back to safe-ish zone -> all stages can retrigger later
+            sanityWarning = false;
+            sanityDanger = false;
+            sanityLost = false;
+        }
+        else if (pSanity > 20f)
+        {
+            // Above 20: danger + lost can retrigger later
+            sanityDanger = false;
+            sanityLost = false;
+        }
+        else if (pSanity > 5f)
+        {
+            // Above 5: "lost" can retrigger later
+            sanityLost = false;
+        }
+
+        //fire messages when entering each band (only once per entry)
+
+        if (pSanity <= 40f && pSanity > 20f && !sanityWarning)
+        {
+            // First stage: starting to slip
+            FeedbackBanner.Instance.Show("What is... happening?");
+            sanityWarning = true;      // mark as shown until we above 40
+        }
+        else if (pSanity <= 20f && pSanity > 5f && !sanityDanger)
+        {
+            // Second stage: serious danger
+            FeedbackBanner.Instance.Show("It's taking over...");
+            sanityDanger = true;       // mark as shown until above 20
+        }
+        else if (pSanity <= 5f && !sanityLost)
+        {
+            // Final stage: completely lost
+            FeedbackBanner.Instance.Show("I'M LOST!!");
+            sanityLost = true;         // mark as shown until above 5
+        }
+
 
         if (pStam < 1) pStam = 0;       //makes sure no neg stam
         if (pStam > pStamMax) pStam = pStamMax;     //samesies logic
@@ -205,11 +272,22 @@ public class PlayerController : MonoBehaviour
             pStam += stamRegen * Time.deltaTime;   //sets stam regen /sec
         }
 
-        if ((pSanity < pSanityMax) && canRegenSanity)     //checks these conditions before running regen
-        {
-            pSanity += pSanityRegen * Time.deltaTime;   //sets stam regen /sec
-        }
+        //if ((pSanity < pSanityMax) && canRegenSanity)     //checks these conditions before running regen
+        //{
+        //    pSanity += pSanityRegen * Time.deltaTime;   //sets stam regen /sec
+        //}
 
+        bool lookingAtEntity = UpdateSanityFacingEntity();   //checks to see if player is directly staring at entity (raycast from cam, returns true/false and handles drain
+        bool nearEntity = UpdateSanityProximity();      //checks if any entity is within radius,, allows for slow drain creep
+
+        // only regen if we are NOT looking at one and NOT near one
+        canRegenSanity = !(lookingAtEntity || nearEntity);    //makes sure player can only regen sanity when safe
+
+        if ((pSanity < pSanityMax) && canRegenSanity)
+        {
+            pSanity += pSanityRegen * Time.deltaTime;
+            if (pSanity > pSanityMax) pSanity = pSanityMax;
+        }
 
         UpdateAimTarget();   //make sure this stays at end of Update method
         UpdateAimTarget();
@@ -284,8 +362,15 @@ public class PlayerController : MonoBehaviour
         else if (targetObject.CompareTag("Lightbulb"))
         {
             Debug.Log("Picked up lightbulb via interact");
-            InventoryController.bulbCount++;
+            InventoryController.bulbCharges++;
             FeedbackBanner.Instance.Show("This might help my flashlight.");
+            targetObject.SetActive(false);
+        }
+        else if (targetObject.CompareTag("Laudanum"))
+        {
+            Debug.Log("Picked up laudanum");
+            InventoryController.laudanumCharges++;
+            FeedbackBanner.Instance.Show("Alright, med time it seems.");
             targetObject.SetActive(false);
         }
     }
@@ -310,4 +395,93 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(.75f);
         canDmg = true;
     }
+
+    // Returns true if we are currently looking at an Entity
+    bool UpdateSanityFacingEntity()
+    {
+        bool isLookingAtEntity = false;
+
+        // Ray from camera forward
+        Ray ray = new Ray(playerCamera.transform.position,
+                          playerCamera.transform.forward);
+        RaycastHit hit;
+
+        // Shoot ray up to sanityLookRange units
+        if (Physics.Raycast(ray, out hit, sanityLookRange))
+        {
+            // Many models put the collider on a CHILD object while the tag
+            // is on the PARENT, so we check the top-most parent (root).
+            Transform rootTransform = hit.collider.transform.root;
+
+            if (rootTransform.CompareTag(entityTag))
+            {
+                isLookingAtEntity = true;
+            }
+        }
+
+        // If we actually confirmed we're looking at an Entity, drain sanity
+        if (isLookingAtEntity)
+        {
+            pSanity -= sanityLookDrainRate * Time.deltaTime;
+            if (pSanity < 0f) pSanity = 0f;
+
+            // Show this line once when we first start staring at it
+            if (!facingEntityMessageShown)
+            {
+                FeedbackBanner.Instance.Show("That’s *not* just in my head... I wish it was.");
+                facingEntityMessageShown = true;
+            }
+        }
+        else
+        {
+            // Not looking at an Entity anymore: allow the line to trigger next time
+            facingEntityMessageShown = false;
+        }
+
+        return isLookingAtEntity;
+    }
+
+
+
+    // Returns true if any Entity is within sanityNearRadius
+    bool UpdateSanityProximity()
+    {
+        bool isNearEntity = false;
+
+        // Check for any colliders in radius
+        Collider[] hits = Physics.OverlapSphere(transform.position, sanityNearRadius);
+        for (int index = 0; index < hits.Length; index++)
+        {
+            // If your tag is on the parent, use hits[index].transform.root.CompareTag(entityTag)
+            if (hits[index].CompareTag(entityTag))
+            {
+                isNearEntity = true;
+                break;
+            }
+        }
+
+        if (isNearEntity)
+        {
+            // slow sanity drain
+            pSanity -= 0.5f * Time.deltaTime;
+            if (pSanity < 0f) pSanity = 0f;
+
+            // only show the message ONCE while we're in range
+            if (!proximityMessageShown)
+            {
+                FeedbackBanner.Instance.Show("I have a feeling something is watching me...");
+                proximityMessageShown = true;
+            }
+        }
+        else
+        {
+            // out of range: allow it to fire again next time we get close
+            proximityMessageShown = false;
+        }
+
+        return isNearEntity;
+    }
+
+
+
 }

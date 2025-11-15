@@ -7,6 +7,7 @@ public class Hazard : MonoBehaviour
     
     bool canDealDmg;
     public float dmgCooldown = 1.5f;
+    public int dmgGiven = 10;
 
     void Start()
     {
@@ -20,7 +21,7 @@ public class Hazard : MonoBehaviour
     {
         if (other.CompareTag("Player") && canDealDmg)
         {
-            int dmgGiven = 10;        //putting it down here bc god hates us and tweaks = bad *apparently*
+            //int dmgGiven = 10;        //putting it down here bc god hates us and tweaks = bad *apparently*
             //Debug.Log("Dmg given: " + dmgGiven);
             PlayerController.dmgToPC = dmgGiven;
             PlayerController.TakeDmg();

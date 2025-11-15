@@ -13,14 +13,17 @@ public class InventoryController : MonoBehaviour
 
     public bool flashlightOn;
     public int medCharges;      //med packs can stack so player can have more than 1
-    public int bulbCount;
+    public int bulbCharges;
     public int bulbRestore = 35;
+    public int laudanumCharges;
+    public int laudanumRestore = 35;
     public float flLife;
     public bool flWarningTextShown;
     public bool flOutTextShown;
-    //public float flDrain = .33f; 
     public TextMeshProUGUI flLifeDisplay;
     public TextMeshProUGUI medChargeDisplay; 
+    public TextMeshProUGUI bulbChargeDisplay;
+    public TextMeshProUGUI laudanumChargeDisplay;
     public GameObject flDirectionalLight;
     public int medpackHeal = 30;
 
@@ -38,14 +41,24 @@ public class InventoryController : MonoBehaviour
         {
             medCharges = 2;   //test purposes,, ensures we have enough to test stuff without giving them to us on other levels. i want players to have to find them.
         }
+        if (SceneManager.GetActiveScene().name == "Level 1")
+        {
+            medCharges = 0;
+            bulbCharges = 0;
+            laudanumCharges = 0;
+        }
     }
 
     private void Update()
     {
-        string medChText = medCharges.ToString("F0");      //f = fixed-point format (reg decimal number), 0 = amt of decimal places to show :) 
+        string medChText = medCharges.ToString("F0");      //f = fixed-point format (reg decimal number), 0 = amt of decimal places to show,, kinda irrelevant here but i was sleep deprived. good practice for this at least. :) 
         string flLifeText = flLife.ToString("F0");
+        string bulbChargeText = bulbCharges.ToString("F0");
+        string laudinumChargeText = laudanumCharges.ToString("F0");
         medChargeDisplay.text = "(" + medChText + ")";
         flLifeDisplay.text = flLifeText + "%";
+        bulbChargeDisplay.text = "(" + bulbChargeText + ")";
+        laudanumChargeDisplay.text = "(" + laudinumChargeText + ")";
         if (flLife < 0) flLife = 0;
         if (flLife >= 100) flLife = 100;
 
@@ -61,12 +74,12 @@ public class InventoryController : MonoBehaviour
         }
         else if (flLife < 26 && flLife > 0)
         {
-            flWarningTextShown = true;
             if (!flWarningTextShown)
             {
                 FeedbackBanner.Instance.Show("My light is running low. I better find a bulb soon.");
                 flWarningTextShown = true;
             }
+            flWarningTextShown = true;
         }
         else if (flLife < 1)    //turns off fl when life = 0,, keep value at one bc the time operates in decimals even if doesnt show
         {
@@ -120,13 +133,29 @@ public class InventoryController : MonoBehaviour
 
         if (Input.GetKeyDown("3"))
         {
-            if (bulbCount < 1)
+            if (bulbCharges < 1)
             {
                 FeedbackBanner.Instance.Show("I need to find more lightbulbs.");
             }
             else
             {
                 flLife += bulbRestore;
+            }
+        }
+        if (Input.GetKeyDown("4"))
+        {
+            if (laudanumCharges < 1)
+            {
+                FeedbackBanner.Instance.Show("I need to find more pills.");
+            }
+            else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
+            {
+                FeedbackBanner.Instance.Show("I don't need to use that yet.");
+            }
+            else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
+            {
+                FeedbackBanner.Instance.Show("Ah, that's much better.");
+                PlayerController.pSanity += laudanumRestore;
             }
         }
     }

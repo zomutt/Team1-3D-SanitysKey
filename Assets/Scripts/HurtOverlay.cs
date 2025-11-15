@@ -9,7 +9,7 @@ public class HurtOverlay : MonoBehaviour
     [SerializeField] float fadeInDuration = 0.1f;
     [SerializeField] float holdDuration = 0.1f;
     [SerializeField] float fadeOutDuration = 0.3f;
-    [SerializeField] float maxAlpha = 0.7f;   // how strong the flash gets
+    [SerializeField] float maxAlpha = 1f;   // how strong the flash gets
 
     Coroutine activeRoutine;
 

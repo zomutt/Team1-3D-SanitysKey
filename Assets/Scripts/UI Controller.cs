@@ -17,12 +17,16 @@ public class UIController : MonoBehaviour
     public Image FeedbackBG;
     public TextMeshProUGUI flLifeText;
     public InventoryController InventoryController;
+    public GameObject SanityOverlay;
+    public GameObject HurtOverlay;
 
 
     void Start()
     {
         if (PlayerController == null)
             PlayerController = Object.FindAnyObjectByType<PlayerController>();
+        SanityOverlay.SetActive(true);
+        HurtOverlay.SetActive(true);       //this is so that we dont have to constantly see these while editing
     }
 
     void Update()
