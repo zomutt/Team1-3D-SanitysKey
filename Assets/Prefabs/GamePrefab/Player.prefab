@@ -164,7 +164,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1.64, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1193470096886482681}
   m_Father: {fileID: 7203796189980406912}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &8589818976978291391
@@ -251,13 +252,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4802940202224396398}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.24654548, z: -0, w: 0.96913123}
-  m_LocalPosition: {x: 0, y: 1.36, z: 0.40999985}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.27999997, z: 0.40999985}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7203796189980406912}
-  m_LocalEulerAnglesHint: {x: 0, y: 28.546, z: 0}
+  m_Father: {fileID: 3982481615620009291}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!108 &3450626633682722670
 Light:
   m_ObjectHideFlags: 0
@@ -267,19 +268,19 @@ Light:
   m_GameObject: {fileID: 4802940202224396398}
   m_Enabled: 1
   serializedVersion: 11
-  m_Type: 2
+  m_Type: 0
   m_Color: {r: 0.735849, g: 0.5648877, b: 0.23305188, a: 1}
-  m_Intensity: 3.03
-  m_Range: 10.25
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
+  m_Intensity: 7.5
+  m_Range: 20
+  m_SpotAngle: 80
+  m_InnerSpotAngle: 8
   m_CookieSize: 10
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
-    m_Bias: 0.05
+    m_Bias: 0.055
     m_NormalBias: 0.52
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
@@ -300,7 +301,7 @@ Light:
       e32: 0
       e33: 1
     m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
+  m_Cookie: {fileID: 2800000, guid: 6a268f2a8e61ae647900bd296bf05a29, type: 3}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
   m_RenderMode: 0
@@ -311,7 +312,7 @@ Light:
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 0.21
+  m_BounceIntensity: 0.5
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -356,7 +357,6 @@ Transform:
   m_Children:
   - {fileID: 3982481615620009291}
   - {fileID: 6019039971216496540}
-  - {fileID: 1193470096886482681}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &4701936746367454768
@@ -405,11 +405,16 @@ MonoBehaviour:
   lookXLimit: 45
   InventoryController: {fileID: 0}
   canMove: 1
+  HurtOverlay: {fileID: 0}
   pHP: 0
   pHPMax: 100
+  LevelOnDeath: 
   pSanity: 0
   pSanityMax: 100
   pSanityRegen: 2
+  sanityWarning: 0
+  sanityDanger: 0
+  sanityLost: 0
   pStam: 0
   pStamMax: 100
   runCost: 5
@@ -422,3 +427,10 @@ MonoBehaviour:
   - MedPack
   - Bulb
   CrosshairController: {fileID: 0}
+  hasKey1: 0
+  DoorController: {fileID: 0}
+  entityTag: Entity
+  sanityLookDrainRate: 4
+  sanityLookRange: 15
+  sanityNearDrainRate: 0.5
+  sanityNearRadius: 10
