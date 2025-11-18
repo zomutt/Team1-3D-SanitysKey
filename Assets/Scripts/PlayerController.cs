@@ -394,8 +394,14 @@ public class PlayerController : MonoBehaviour
         {
             if (hasKey1)
             {
-                DoorController.OpenDoor();
+                DoorController door = currentAimCollider.GetComponentInParent<DoorController>();
+
+                if (door != null)
+                {
+                    door.OpenDoor();
+                }
             }
+            else { FeedbackBanner.Instance.Show("It's locked."); }
         }
     }
 
@@ -505,7 +511,5 @@ public class PlayerController : MonoBehaviour
 
         return isNearEntity;
     }
-
-
 
 }
