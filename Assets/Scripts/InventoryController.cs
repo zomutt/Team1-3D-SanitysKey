@@ -26,7 +26,7 @@ public class InventoryController : MonoBehaviour
     public TextMeshProUGUI laudanumChargeDisplay;
     public GameObject flDirectionalLight;
     public int medpackHeal = 30;
-
+    public int canteenCount;
     public PlayerController PlayerController;
 
 
@@ -46,6 +46,7 @@ public class InventoryController : MonoBehaviour
             medCharges = 0;
             bulbCharges = 0;
             laudanumCharges = 0;
+            canteenCount = 0;
         }
     }
 

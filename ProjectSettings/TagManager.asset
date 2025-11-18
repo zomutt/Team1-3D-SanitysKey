@@ -13,6 +13,7 @@ TagManager:
   - Checkpoint
   - Door
   - Key1
+  - Canteen
   layers:
   - Default
   - TransparentFX

@@ -403,6 +403,12 @@ public class PlayerController : MonoBehaviour
             }
             else { FeedbackBanner.Instance.Show("It's locked."); }
         }
+        else if (targetObject.CompareTag("Canteen"))
+        {
+            targetObject.SetActive(false);
+            InventoryController.canteenCount++;
+            FeedbackBanner.Instance.Show("If only this had some water in it.");
+        }
     }
 
 
