@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;   //allows you to customize input via script
 using UnityEngine.SceneManagement;
-
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
@@ -66,7 +65,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float interactRange = 3f;
     [SerializeField] string[] interactableTags;          // tags that count as interactable
     [SerializeField] CrosshairController CrosshairController;
-
+    bool isFlashOn; //needed for entity dispersement
+    public bool hasKey1;
+    public DoorController DoorController;
     [Header("Interaction UI")]
     Collider currentAimCollider;
 
@@ -115,6 +116,7 @@ public class PlayerController : MonoBehaviour
         pSanity = pSanityMax;
         canJump = true;
         canDmg = true;
+        hasKey1 = false;
 
         stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
 
@@ -374,7 +376,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Picked up med pack via interact");
             InventoryController.medCharges++;
-            FeedbackBanner.Instance.Show("This seems useful.");
+            FeedbackBanner.Instance.Show("Ah! A medpack. This seems useful.");
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Lightbulb"))
@@ -390,6 +392,18 @@ public class PlayerController : MonoBehaviour
             InventoryController.laudanumCharges++;
             FeedbackBanner.Instance.Show("Alright, med time it seems.");
             targetObject.SetActive(false);
+        }
+        else if (targetObject.CompareTag("Key1"))
+        {
+            hasKey1 = true;
+            targetObject.SetActive(false);
+        }
+        else if (targetObject.CompareTag("Door"))
+        {
+            if (hasKey1)
+            {
+                DoorController.OpenDoor();
+            }
         }
     }
 
@@ -446,7 +460,7 @@ public class PlayerController : MonoBehaviour
             // Show this line once when we first start staring at it
             if (!facingEntityMessageShown)
             {
-                FeedbackBanner.Instance.Show("That’s *not* just in my head... I wish it was.");
+                FeedbackBanner.Instance.Show("No way that's *not* just in my head... I wish it was.");
                 facingEntityMessageShown = true;
             }
         }
@@ -470,7 +484,7 @@ public class PlayerController : MonoBehaviour
         Collider[] hits = Physics.OverlapSphere(transform.position, sanityNearRadius);
         for (int index = 0; index < hits.Length; index++)
         {
-            // If your tag is on the parent, use hits[index].transform.root.CompareTag(entityTag)
+            // If tag is on the parent, use hits[index].transform.root.CompareTag(entityTag)
             if (hits[index].CompareTag(entityTag))
             {
                 isNearEntity = true;

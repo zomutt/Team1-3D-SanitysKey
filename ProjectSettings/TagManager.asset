@@ -11,6 +11,8 @@ TagManager:
   - Laudanum
   - Hazard
   - Checkpoint
+  - Door
+  - Key1
   layers:
   - Default
   - TransparentFX
