@@ -49,9 +49,5 @@ public class UIController : MonoBehaviour
         stamText.text = PlayerController.pStam.ToString("F0") + "%";  //f = fixed-point format (reg decimal number), 0 = amt of decimal places to show :) 
         sanityText.text = PlayerController.pSanity.ToString("F0") + "%";
         flLifeText.text = InventoryController.flLife.ToString("F0") + "%";
-
-
-        if (InventoryController.canteenCount == 0) { canteenInv.SetActive(false); }
-        else { canteenInv.SetActive(false); }
     }
 }

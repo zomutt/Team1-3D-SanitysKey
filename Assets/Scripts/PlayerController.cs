@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;   //allows you to customize input via script
 using UnityEngine.SceneManagement;
 [RequireComponent(typeof(CharacterController))]
@@ -82,11 +83,35 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] bool proximityMessageShown;   // tracks if we've already shown the "watching me" text
     [HideInInspector] bool facingEntityMessageShown;   // tracks if we've shown the "staring" line
 
+    [Header("Misc.")]
+    [HideInInspector] public bool hasCanteen;
+    public GameObject fireParent;
 
 
-
+    [Header("Audio")]
+    AudioSource audioSource;
+    public AudioClip sizzle;
+    public AudioClip fireSuccess;
+    public AudioClip sanity1;
+    public AudioClip sanity2;
+    public AudioClip sanity3;
+    public AudioClip nostam;
+    public AudioClip norange;
+    public AudioClip medpack;
+    public AudioClip watersuccess;
+    public AudioClip waterfilthy;
+    public AudioClip watching;
+    public AudioClip notinhead;
+    public AudioClip locked;
+    public AudioClip laudanum;
+    public AudioClip key;
+    public AudioClip hurt;
+    public AudioClip firecurious;
+    public AudioClip emptycanteen;
+    public AudioClip bulb;
     void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;            //needed for other scripts to easily reference the player
         DontDestroyOnLoad(gameObject);        //WE PERSIST
@@ -117,7 +142,7 @@ public class PlayerController : MonoBehaviour
         canJump = true;
         canDmg = true;
         hasKey1 = false;
-
+        hasCanteen = false;
         stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
 
         characterController = GetComponent<CharacterController>();
@@ -195,18 +220,21 @@ public class PlayerController : MonoBehaviour
         {
             // First stage: starting to slip
             FeedbackBanner.Instance.Show("What is... happening?");
+            audioSource.PlayOneShot(sanity1);
             sanityWarning = true;      // mark as shown until we above 40
         }
         else if (pSanity <= 20f && pSanity > 5f && !sanityDanger)
         {
             // Second stage: serious danger
             FeedbackBanner.Instance.Show("It's taking over...");
+            audioSource.PlayOneShot(sanity2);
             sanityDanger = true;       // mark as shown until above 20
         }
         else if (pSanity <= 5f && !sanityLost)
         {
             // Final stage: completely lost
-            FeedbackBanner.Instance.Show("It's over!");
+            audioSource.PlayOneShot(sanity3);
+            FeedbackBanner.Instance.Show("It's over...");
             sanityLost = true;         // mark as shown until above 5
         }
 
@@ -235,7 +263,7 @@ public class PlayerController : MonoBehaviour
         Vector2 moveInput = canMove ? moveAction.ReadValue<Vector2>() : Vector2.zero;
         Vector2 lookInput = canMove ? lookAction.ReadValue<Vector2>() : Vector2.zero;
         bool isRunning = canMove && runAction.IsPressed() && pStam >= 5;    //RUNTIMEBOIS,, checks these conditions to see if player can run
-        if (!isRunning && canMove && runAction.WasPressedThisFrame() && pStam < 5f) FeedbackBanner.Instance.Show("I'm too tired to run.");
+        if (!isRunning && canMove && runAction.WasPressedThisFrame() && pStam < 5f) FeedbackBanner.Instance.Show("I'm too tired for that.");
 
         // 3) Build world-space planar velocity,, checks for run,, also do not ask me what this means all ik is that it works
         float speed = isRunning ? sprintSpeed : moveSpeed;    //This uses the ternary operator. If isRunning is true, speed = sprintSpeed; otherwise speed = moveSpeed.
@@ -257,10 +285,12 @@ public class PlayerController : MonoBehaviour
         }
 
         if (grounded && canMove && jumpAction.WasPressedThisFrame() && pStam < 10f)
-            FeedbackBanner.Instance.Show("I'm too tired to jump.");
-
-        // Optional: keep controller “stuck” to ground/slopes
-        if (grounded && moveDirection.y < 0f)
+        {
+            FeedbackBanner.Instance.Show("I'm too tired for that.");
+            audioSource.PlayOneShot(nostam);
+        }
+            // Optional: keep controller “stuck” to ground/slopes
+            if (grounded && moveDirection.y < 0f)
             moveDirection.y = -2f;
 
         // 5) Gravity
@@ -358,7 +388,8 @@ public class PlayerController : MonoBehaviour
 
         if (distanceToTarget > interactRange)
         {
-            FeedbackBanner.Instance.Show("It's too far away.");
+            FeedbackBanner.Instance.Show("I need to get closer.");
+            audioSource.PlayOneShot(norange);
             return;
         }
 
@@ -369,25 +400,30 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Picked up med pack via interact");
             InventoryController.medCharges++;
             FeedbackBanner.Instance.Show("Ah! A medpack. This seems useful.");
+            audioSource.PlayOneShot(medpack);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Lightbulb"))
         {
             Debug.Log("Picked up lightbulb via interact");
             InventoryController.bulbCharges++;
-            FeedbackBanner.Instance.Show("This might help my flashlight.");
+            FeedbackBanner.Instance.Show("Thank god, another flashlight bulb.");
+            audioSource.PlayOneShot(bulb);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Laudanum"))
         {
             Debug.Log("Picked up laudanum");
             InventoryController.laudanumCharges++;
-            FeedbackBanner.Instance.Show("Alright, med time it seems.");
+            FeedbackBanner.Instance.Show("What a blessing, this should help me keep it together in here.");
+            audioSource.PlayOneShot(laudanum);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Key1"))
         {
+            FeedbackBanner.Instance.Show("I wonder what this may be to.");
             hasKey1 = true;
+            audioSource.PlayOneShot(key);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Door"))
@@ -401,23 +437,41 @@ public class PlayerController : MonoBehaviour
                     door.OpenDoor();
                 }
             }
-            else { FeedbackBanner.Instance.Show("It's locked."); }
+            else { FeedbackBanner.Instance.Show("Damn, it's locked."); audioSource.PlayOneShot(locked); }
         }
         else if (targetObject.CompareTag("Canteen"))
         {
             targetObject.SetActive(false);
+            hasCanteen = true;
             InventoryController.canteenCount++;
+            audioSource.PlayOneShot(emptycanteen);
             FeedbackBanner.Instance.Show("If only this had some water in it.");
         }
+        else if (targetObject.CompareTag("Fire"))
+        {
+            if (InventoryController.canteenCount == 0) { FeedbackBanner.Instance.Show("That's odd, I thought this place was abandoned. Could this be the key to something?"); audioSource.PlayOneShot(firecurious); }
+        }
+
+        else if (targetObject.CompareTag("Water"))
+        {
+            Debug.Log("Water interacted with.");
+            if (!hasCanteen) { FeedbackBanner.Instance.Show("Ugh, this water is filthy!"); audioSource.PlayOneShot(waterfilthy); }
+            else if (hasCanteen)
+            {
+                InventoryController.filledCanteenCount++;
+                FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it.");
+                audioSource.PlayOneShot(watersuccess);
+            }
+        }
+
     }
-
-
     public void TakeDmg()
     {
         if (canDmg)
         {
             pHP -= dmgToPC;
-            FeedbackBanner.Instance.Show("I'm hurt!");
+            FeedbackBanner.Instance.Show("Ah! I'm hurt!");
+            audioSource.PlayOneShot(hurt);
             Debug.Log("Player hp: " + pHP);
             StartCoroutine(iframe());
             HurtOverlay.Play();
@@ -464,7 +518,8 @@ public class PlayerController : MonoBehaviour
             // Show this line once when we first start staring at it
             if (!facingEntityMessageShown)
             {
-                FeedbackBanner.Instance.Show("No way that's *not* just in my head... I wish it was.");
+                FeedbackBanner.Instance.Show("No way that's *not* just in my head... I wish it was, though.");
+                audioSource.PlayOneShot(notinhead);
                 facingEntityMessageShown = true;
             }
         }
@@ -505,7 +560,8 @@ public class PlayerController : MonoBehaviour
             // only show the message ONCE while we're in range
             if (!proximityMessageShown)
             {
-                FeedbackBanner.Instance.Show("I have a feeling something is watching me...");
+                FeedbackBanner.Instance.Show("Is something... watching me?");
+                audioSource.PlayOneShot(watching);
                 proximityMessageShown = true;
             }
         }
@@ -518,4 +574,13 @@ public class PlayerController : MonoBehaviour
         return isNearEntity;
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; }
+    }
 }

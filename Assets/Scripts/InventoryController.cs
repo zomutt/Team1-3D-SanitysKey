@@ -1,6 +1,8 @@
+using System.Collections;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public class InventoryController : MonoBehaviour
@@ -24,14 +26,22 @@ public class InventoryController : MonoBehaviour
     public TextMeshProUGUI medChargeDisplay; 
     public TextMeshProUGUI bulbChargeDisplay;
     public TextMeshProUGUI laudanumChargeDisplay;
+    public TextMeshProUGUI canteenChargeDisplay;
     public GameObject flDirectionalLight;
     public int medpackHeal = 30;
     public int canteenCount;
+    public int filledCanteenCount;
     public PlayerController PlayerController;
-
+    public GameObject canteenImg;
+    public GameObject fireParent;
+    [HideInInspector] public bool inRangeCanteen;
+    [SerializeField] AudioClip sizzleFire;
+    public AudioClip fireSuccess;
+    AudioSource audioSource;
 
     private void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
         flashlightOn = false;
         flDirectionalLight.SetActive(false);
         flWarningTextShown = false;
@@ -56,10 +66,12 @@ public class InventoryController : MonoBehaviour
         string flLifeText = flLife.ToString("F0");
         string bulbChargeText = bulbCharges.ToString("F0");
         string laudinumChargeText = laudanumCharges.ToString("F0");
+        string canteenCountText = canteenCount.ToString();
         medChargeDisplay.text = "(" + medChText + ")";
         flLifeDisplay.text = flLifeText + "%";
         bulbChargeDisplay.text = "(" + bulbChargeText + ")";
         laudanumChargeDisplay.text = "(" + laudinumChargeText + ")";
+        canteenChargeDisplay.text = "(" + canteenCountText + ")";
         if (flLife < 0) flLife = 0;
         if (flLife >= 100) flLife = 100;
 
@@ -84,11 +96,10 @@ public class InventoryController : MonoBehaviour
         }
         else if (flLife < 1)    //turns off fl when life = 0,, keep value at one bc the time operates in decimals even if doesnt show
         {
-            FeedbackBanner.Instance.Show("Damn... I better find a light source.");
             flDirectionalLight.SetActive(false);
             if (!flOutTextShown)
             {
-                FeedbackBanner.Instance.Show("Damn... I need to find a light source fast.");
+                FeedbackBanner.Instance.Show("I need to find a light source NOW!");
                 flWarningTextShown = true;
             }
         }
@@ -97,7 +108,7 @@ public class InventoryController : MonoBehaviour
         {
             if (flLife < 1)
             {
-                FeedbackBanner.Instance.Show("The bulb on this is out.");
+                FeedbackBanner.Instance.Show("Ugh, the bulb on this is out.");
             }
             else if (!flashlightOn && flLife > 1)   // turn ON
             {
@@ -128,7 +139,7 @@ public class InventoryController : MonoBehaviour
             }
             else if (medCharges < 1)
             {
-                FeedbackBanner.Instance.Show("I need to find more medpacks.");
+                FeedbackBanner.Instance.Show("I need to find more medpacks first.");
             }
         }
 
@@ -136,7 +147,7 @@ public class InventoryController : MonoBehaviour
         {
             if (bulbCharges < 1)
             {
-                FeedbackBanner.Instance.Show("I need to find more lightbulbs.");
+                FeedbackBanner.Instance.Show("I need to find more lightbulbs before I can do that.");
             }
             else
             {
@@ -147,18 +158,39 @@ public class InventoryController : MonoBehaviour
         {
             if (laudanumCharges < 1)
             {
-                FeedbackBanner.Instance.Show("I need to find more pills.");
+                FeedbackBanner.Instance.Show("I need to find more laudanum.");
             }
             else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
             {
-                FeedbackBanner.Instance.Show("I don't need to use that yet.");
+                FeedbackBanner.Instance.Show("Thankfully I don't need to use that yet.");
             }
             else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
             {
-                FeedbackBanner.Instance.Show("Ah, that's much better.");
+                FeedbackBanner.Instance.Show("Ah, I feel much more grounded.");
                 PlayerController.pSanity += laudanumRestore;
             }
         }
+        if (Input.GetKeyDown("5"))
+        { 
+            if (filledCanteenCount == 0) { return; }
+            else if (filledCanteenCount > 0 && !inRangeCanteen) { FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here."); }
+            else if (filledCanteenCount > 0 && inRangeCanteen) 
+            { 
+                FeedbackBanner.Instance.Show("Aha! I knew it. Let's check this out.");
+                canteenCount--;
+                fireParent.SetActive(false);
+                StartCoroutine(successdelay());
+                
+                
+            }
+        }
+    }
+
+    private IEnumerator successdelay()
+    {
+        audioSource.PlayOneShot(sizzleFire);
+        yield return new WaitForSeconds(.5f);
+        audioSource.PlayOneShot(fireSuccess);
     }
 }
     

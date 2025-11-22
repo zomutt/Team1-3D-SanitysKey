@@ -14,7 +14,7 @@ public class SanityOverlay : MonoBehaviour
     [SerializeField] float fullFadeSanity = 5f;   // overlay maxes out at this sanity
     [SerializeField] float maxAlpha = 1f;   // strongest opacity
 
-    // NEW: how visible it is *right when* sanity hits 70
+    // how visible it is *right when* sanity hits 70
     [SerializeField] float minAlphaAtStart = 0.1f;
 
     [Header("Fade smoothing")]
