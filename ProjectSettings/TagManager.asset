@@ -17,6 +17,11 @@ TagManager:
   - FireRange
   - Fire
   - Water
+  - Matchbox
+  - Scone1
+  - Scone2
+  - Scone3
+  - Scone4
   layers:
   - Default
   - TransparentFX

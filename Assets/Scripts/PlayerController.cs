@@ -77,7 +77,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] string entityTag = "Entity";
 
     [SerializeField] float sanityLookDrainRate = 4f;   // /sec when staring
-    [SerializeField] float sanityLookRange = 15f;  // raycast distance
+    [SerializeField] float sanityLookRange = 10f;  // raycast distance
     [SerializeField] float sanityNearDrainRate = .5f;   // /sec when near
     [SerializeField] float sanityNearRadius = 10f;  // sphere radius
     [HideInInspector] bool proximityMessageShown;   // tracks if we've already shown the "watching me" text
@@ -449,6 +449,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (targetObject.CompareTag("Fire"))
         {
+            Debug.Log("Fire interacted.");
             if (InventoryController.canteenCount == 0) { FeedbackBanner.Instance.Show("That's odd, I thought this place was abandoned. Could this be the key to something?"); audioSource.PlayOneShot(firecurious); }
         }
 
@@ -576,11 +577,11 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; }
+        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; }
+        if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
     }
 }
