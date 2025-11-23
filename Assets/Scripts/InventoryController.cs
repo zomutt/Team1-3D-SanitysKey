@@ -32,6 +32,7 @@ public class InventoryController : MonoBehaviour
     public int canteenCount;
     public int filledCanteenCount;
     public PlayerController PlayerController;
+    public GameObject flashlightCone;
     public GameObject canteenImg;
     public GameObject fireParent;
     [HideInInspector] public bool inRangeCanteen;
@@ -48,6 +49,7 @@ public class InventoryController : MonoBehaviour
     public AudioClip healfail;
     public AudioClip canteenfail;
     public AudioClip bulbout;
+    public AudioClip flashlightSFX;
     AudioSource audioSource;
 
     private void Awake()
@@ -127,12 +129,16 @@ public class InventoryController : MonoBehaviour
             else if (!flashlightOn && flLife > 1)   // turn ON
             {
                 flDirectionalLight.SetActive(true);
+                flashlightCone.SetActive(true);
+                audioSource.PlayOneShot(flashlightSFX);
                 flashlightOn = true;
                 Debug.Log("Turning ON FL");
             }
             else if (flashlightOn)                  // turn OFF
             {
                 flDirectionalLight.SetActive(false);
+                flashlightCone.SetActive(false);
+                audioSource.PlayOneShot(flashlightSFX);
                 flashlightOn = false;
                 Debug.Log("Turning OFF FL");
             }

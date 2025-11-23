@@ -109,6 +109,8 @@ public class PlayerController : MonoBehaviour
     public AudioClip firecurious;
     public AudioClip emptycanteen;
     public AudioClip bulb;
+    public AudioClip walkingSFX;
+    public AudioClip runningSFX;
     void Awake()
     {
         audioSource = GetComponent<AudioSource>();
