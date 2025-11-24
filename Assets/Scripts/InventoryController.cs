@@ -19,7 +19,9 @@ public class InventoryController : MonoBehaviour
     public int bulbRestore = 35;
     public int laudanumCharges;
     public int laudanumRestore = 35;
+    public bool hasMatches;
     public float flLife;
+    public bool hasCanteen;
     public bool flWarningTextShown;
     public bool flOutTextShown;
     public TextMeshProUGUI flLifeDisplay;
@@ -31,9 +33,11 @@ public class InventoryController : MonoBehaviour
     public int medpackHeal = 30;
     public int canteenCount;
     public int filledCanteenCount;
+    public bool inTubRange;
     public PlayerController PlayerController;
     public GameObject flashlightCone;
     public GameObject canteenImg;
+    public GameObject matchImg;
     public GameObject fireParent;
     [HideInInspector] public bool inRangeCanteen;
     [SerializeField] AudioClip sizzleFire;
@@ -59,6 +63,7 @@ public class InventoryController : MonoBehaviour
         flDirectionalLight.SetActive(false);
         flWarningTextShown = false;
         flOutTextShown = false;
+        hasMatches = false;
         flLife = 100; //starts player with full charge bc we're nice :)
         if (SceneManager.GetActiveScene().name == "TestScene")
         {
@@ -87,6 +92,8 @@ public class InventoryController : MonoBehaviour
         canteenChargeDisplay.text = "(" + canteenCountText + ")";
         if (flLife < 0) flLife = 0;
         if (flLife >= 100) flLife = 100;
+        if (!hasMatches) { matchImg.SetActive(false); }
+        if (hasMatches) { matchImg.SetActive(true); }
 
         if (flashlightOn)
         {
@@ -196,9 +203,10 @@ public class InventoryController : MonoBehaviour
         }
         if (Input.GetKeyDown("5"))
         { 
-            if (filledCanteenCount == 0) 
-            {
-                Debug.Log("No filled canteens"); 
+            if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0)) 
+            { 
+                filledCanteenCount++; FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it."); 
+                audioSource.PlayOneShot(PlayerController.watersuccess); 
             }
             else if (filledCanteenCount > 0 && !inRangeCanteen) 
             {
@@ -214,6 +222,11 @@ public class InventoryController : MonoBehaviour
                 StartCoroutine(successdelay());
             }
         }
+        if (Input.GetKeyDown("6"))
+        {
+            if (!hasMatches) { FeedbackBanner.Instance.Show("I can't use that yet."); }
+            else { Debug.Log("Matches used"); }
+        }
     }
 
     private IEnumerator successdelay()
@@ -223,4 +236,3 @@ public class InventoryController : MonoBehaviour
         audioSource.PlayOneShot(fireSuccess);
     }
 }
-    

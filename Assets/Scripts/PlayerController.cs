@@ -445,6 +445,7 @@ public class PlayerController : MonoBehaviour
         {
             targetObject.SetActive(false);
             hasCanteen = true;
+            InventoryController.hasCanteen = true;
             InventoryController.canteenCount++;
             audioSource.PlayOneShot(emptycanteen);
             FeedbackBanner.Instance.Show("If only this had some water in it.");
@@ -465,6 +466,12 @@ public class PlayerController : MonoBehaviour
                 FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it.");
                 audioSource.PlayOneShot(watersuccess);
             }
+        }
+        else if (targetObject.CompareTag("Matches"))
+        {
+            Debug.Log("Matches");
+            InventoryController.hasMatches = true;
+            FeedbackBanner.Instance.Show("Some matches... This may come in handy.");
         }
 
     }
@@ -579,11 +586,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
+        if (other.CompareTag("TubRange")) { InventoryController.inTubRange = true; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
     }
 
     private void OnTriggerExit(Collider other)
     {
+        if (other.CompareTag("TubRange")) { InventoryController.inTubRange = false; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
     }
 }

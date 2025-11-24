@@ -22,6 +22,11 @@ TagManager:
   - Scone2
   - Scone3
   - Scone4
+  - TubRange
+  - SR1
+  - SR2
+  - SR3
+  - SR4
   layers:
   - Default
   - TransparentFX
