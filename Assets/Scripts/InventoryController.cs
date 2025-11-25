@@ -54,8 +54,25 @@ public class InventoryController : MonoBehaviour
     public AudioClip canteenfail;
     public AudioClip bulbout;
     public AudioClip flashlightSFX;
-    AudioSource audioSource;
 
+    AudioSource audioSource;
+    [Header("Scones")]
+    public bool inRangeS1;
+    public bool inRangeS2;
+    public bool inRangeS3;
+    public bool inRangeS4;
+    public GameObject lights1;
+    public GameObject lights2;
+    public GameObject lights3;
+    public GameObject lights4;
+    public string lightString;
+    //public int lightCount;
+    public GameObject sconeDoor;
+    public TextMeshProUGUI sconeText;
+
+
+    public GameObject helpPanel;
+    bool helpOpen;
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -76,6 +93,9 @@ public class InventoryController : MonoBehaviour
             laudanumCharges = 0;
             canteenCount = 0;
         }
+        sconeText.text = "";
+        helpOpen = false;
+        helpPanel.SetActive(false);
     }
 
     private void Update()
@@ -90,6 +110,7 @@ public class InventoryController : MonoBehaviour
         bulbChargeDisplay.text = "(" + bulbChargeText + ")";
         laudanumChargeDisplay.text = "(" + laudinumChargeText + ")";
         canteenChargeDisplay.text = "(" + canteenCountText + ")";
+        lights1.SetActive(false); lights2.SetActive(false); lights3.SetActive(false); lights4.SetActive(false);
         if (flLife < 0) flLife = 0;
         if (flLife >= 100) flLife = 100;
         if (!hasMatches) { matchImg.SetActive(false); }
@@ -125,6 +146,12 @@ public class InventoryController : MonoBehaviour
                 flWarningTextShown = true;
             }
         }
+
+        //if (Input.GetKeyDown(KeyCode.Escape))     //i KNOW this should go in UI controller but like for whatever reason nothing was showing up in inspector. idfk. i literally copy pasted the code over to here and it makes no gd sense. code spaghetti idc.
+        //{
+        //    if (!helpOpen) { helpPanel.SetActive(true); helpOpen = true; }
+        //    if (helpOpen) { helpPanel.SetActive(false); helpOpen = false; }
+        //}
 
         if (Input.GetKeyDown("1"))
         {
@@ -202,32 +229,53 @@ public class InventoryController : MonoBehaviour
             }
         }
         if (Input.GetKeyDown("5"))
-        { 
-            if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0)) 
-            { 
-                filledCanteenCount++; FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it."); 
-                audioSource.PlayOneShot(PlayerController.watersuccess); 
+        {
+            if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0))
+            {
+                filledCanteenCount++; FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it.");
+                audioSource.PlayOneShot(PlayerController.watersuccess);
             }
-            else if (filledCanteenCount > 0 && !inRangeCanteen) 
+            else if (filledCanteenCount > 0 && !inRangeCanteen)
             {
                 Debug.Log("In range: " + inRangeCanteen);
-                FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here."); 
-                audioSource.PlayOneShot(canteenfail); 
+                FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here.");
+                audioSource.PlayOneShot(canteenfail);
             }
-            else if (filledCanteenCount > 0 && inRangeCanteen) 
-            { 
+            else if (filledCanteenCount > 0 && inRangeCanteen)
+            {
                 FeedbackBanner.Instance.Show("Aha! I knew it. Let's check this out.");
                 canteenCount--;
                 fireParent.SetActive(false);
                 StartCoroutine(successdelay());
             }
         }
-        if (Input.GetKeyDown("6"))
-        {
-            if (!hasMatches) { FeedbackBanner.Instance.Show("I can't use that yet."); }
-            else { Debug.Log("Matches used"); }
-        }
     }
+
+        //    if (Input.GetKeyDown("6"))           //*does a hail mary*,, blessed be thy father in heaven or w/e the catholics say when something unholy needs to be sanctified... or at least optimized.
+        //    {
+        //        //if (!hasMatches) { FeedbackBanner.Instance.Show("I can't use that yet."); }
+        //        //if (hasMatches) 
+        //        //{
+        //            //if (inRangeS1) { lights1.SetActive(true); Debug.Log("Lit 1"); lightCount++; lightString += "1"; sconeText.text += "First scone lit... "; Debug.Log(lightString); }
+        //            //else if (inRangeS2) { lights2.SetActive(true); Debug.Log("Lit 2"); lightCount++; lightString += "2"; sconeText.text += "Second scone lit... "; Debug.Log(lightString); }
+        //            //else if (inRangeS3) { lights3.SetActive(true); Debug.Log("Lit 3"); lightCount++; lightString += "3"; sconeText.text += "Third scone lit... "; Debug.Log(lightString); }
+        //            //else if (inRangeS4) { lights4.SetActive(true); Debug.Log("Lit 4"); lightCount++; lightString += "4"; sconeText.text += "Fourth scone lit... "; Debug.Log(lightString); }
+        //            //else { Debug.Log("something wrong :("); }
+        //    //    }
+        //    //}
+    //    if (sconeCount >= 3)         //goes w 6 i pwomise
+    //    {
+    //        lightCount = 0;
+    //        if (lightString == "143") 
+    //        {
+    //            FeedbackBanner.Instance.Show("Seems that worked. Let's see what's through this door.");
+    //            Debug.Log("Puzzle solved");
+    //            lights2.SetActive(true); 
+    //            sconeDoor.SetActive(false);
+    //            sconeText.text = ""; }
+    //        else { lightString = ""; lights1.SetActive(false); lights2.SetActive(false); lights3.SetActive(false); lights4.SetActive(false); FeedbackBanner.Instance.Show("Hmm... Let's try that again."); sconeText.text = ""; }    //reset
+    //    }
+    //}
 
     private IEnumerator successdelay()
     {

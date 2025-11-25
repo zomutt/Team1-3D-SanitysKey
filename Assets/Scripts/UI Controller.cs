@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UIElements;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class UIController : MonoBehaviour
 {
@@ -21,9 +22,15 @@ public class UIController : MonoBehaviour
     public GameObject HurtOverlay;
     public GameObject player;
     public GameObject canteenInv;
+
+    public GameObject helpPanel;
+    public GameObject testGO;
+    bool helpOpen;
     private void Awake()
     {
         player.SetActive(true);    //father forgive me for i have sinned
+        helpOpen = false;
+        helpPanel.SetActive(false);
     }
     void Start()
     {
@@ -49,5 +56,18 @@ public class UIController : MonoBehaviour
         stamText.text = PlayerController.pStam.ToString("F0") + "%";  //f = fixed-point format (reg decimal number), 0 = amt of decimal places to show :) 
         sanityText.text = PlayerController.pSanity.ToString("F0") + "%";
         flLifeText.text = InventoryController.flLife.ToString("F0") + "%";
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Debug.Log("Escape Pressed");
+            if (!helpOpen) 
+            { 
+                helpPanel.SetActive(true); 
+                helpOpen = true;
+                Debug.Log("Opening help panel");
+            }
+            if (helpOpen) { helpPanel.SetActive(false); helpOpen = false; }
+        }
     }
+    public void RestartGameOnClick() { SceneManager.LoadScene("Level1"); }        //needed for restart via help menu
 }

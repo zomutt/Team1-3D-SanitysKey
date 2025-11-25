@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;   //allows you to customize input via script
 using UnityEngine.SceneManagement;
+using UnityEngine.U2D;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
@@ -86,8 +87,12 @@ public class PlayerController : MonoBehaviour
     [Header("Misc.")]
     [HideInInspector] public bool hasCanteen;
     public GameObject fireParent;
-
-
+    public int sconeCount;
+    public GameObject particle1;
+    public GameObject particle2;
+    public GameObject particle3;
+    public GameObject particle4;
+    public GameObject lightDoor;
     [Header("Audio")]
     AudioSource audioSource;
     public AudioClip sizzle;
@@ -148,6 +153,11 @@ public class PlayerController : MonoBehaviour
         stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
 
         characterController = GetComponent<CharacterController>();
+        particle1.SetActive(false);
+        particle2.SetActive(false);
+        particle3.SetActive(false);
+        particle4.SetActive(false);
+        lightDoor.SetActive(false);
     }
         void OnEnable()
     {
@@ -334,9 +344,30 @@ public class PlayerController : MonoBehaviour
             pSanity += pSanityRegen * Time.deltaTime;
             if (pSanity > pSanityMax) pSanity = pSanityMax;
         }
+
+        if (sconeCount >= 3)          //this is for the hallway/scone puzzle, it's kinda code spaghetti tbh
+        {
+            if (InventoryController.lightString == "143")
+            {
+                FeedbackBanner.Instance.Show("That did the trick! Let's go through this door.");
+                particle2.SetActive(true);
+                lightDoor.SetActive(false);
+            }
+            if (InventoryController.lightString != "143")
+            {
+                FeedbackBanner.Instance.Show("Hm... Maybe let's try a different order. There may be a clue around here somewhere.");
+                particle1.SetActive(false);
+                particle2.SetActive(false);
+                particle3.SetActive(false);
+                particle4.SetActive(false);
+                InventoryController.lightString = "";
+            }
+        }
+
         UpdateAimTarget();   //make sure this stays at end of Update method
         UpdateAimTarget();
         HandleInteraction();
+
     }
 
     void UpdateAimTarget()           //i found this online so i'm not like.... super... sure how it works, but it feels p straightforward and it works
@@ -439,7 +470,7 @@ public class PlayerController : MonoBehaviour
                     door.OpenDoor();
                 }
             }
-            else { FeedbackBanner.Instance.Show("Damn, it's locked."); audioSource.PlayOneShot(locked); }
+            else { FeedbackBanner.Instance.Show("It's locked."); audioSource.PlayOneShot(locked); }
         }
         else if (targetObject.CompareTag("Canteen"))
         {
@@ -467,13 +498,52 @@ public class PlayerController : MonoBehaviour
                 audioSource.PlayOneShot(watersuccess);
             }
         }
-        else if (targetObject.CompareTag("Matches"))
+        else if (targetObject.CompareTag("Matchbox"))
         {
-            Debug.Log("Matches");
+            Debug.Log("Matchbox");
             InventoryController.hasMatches = true;
             FeedbackBanner.Instance.Show("Some matches... This may come in handy.");
         }
-
+        else if (targetObject.CompareTag("Scone1") && InventoryController.hasMatches)
+        {
+            FeedbackBanner.Instance.Show("Scone 1 lit...");
+            particle1.SetActive(true);
+            InventoryController.lights1.SetActive(true);
+            InventoryController.lightString += "1";
+            sconeCount++;
+            Debug.Log(InventoryController.lightString);
+            //InventoryController.sconeText.text += "Scone 1 lit... ";
+        }
+        else if (targetObject.CompareTag("Scone2") && InventoryController.hasMatches)
+        {
+            FeedbackBanner.Instance.Show("Scone 2 lit...");
+            particle2.SetActive(true);
+            InventoryController.lights2.SetActive(true);
+            InventoryController.lightString += "2";
+            sconeCount++;
+            Debug.Log(InventoryController.lightString);
+            //InventoryController.sconeText.text += "Scone 2 lit... ";
+        }
+        else if (targetObject.CompareTag("Scone3") && InventoryController.hasMatches)
+        {
+            FeedbackBanner.Instance.Show("Scone 3 lit...");
+            particle3.SetActive(true);
+            InventoryController.lights1.SetActive(true);
+            InventoryController.lightString += "3";
+            sconeCount++;
+            Debug.Log(InventoryController.lightString);
+            //InventoryController.sconeText.text += "Scone 3 lit... ";
+        }
+        else if (targetObject.CompareTag("Scone4") && InventoryController.hasMatches)
+        {
+            FeedbackBanner.Instance.Show("Scone 4 lit...");
+            particle4.SetActive(true);
+            InventoryController.lights1.SetActive(true);
+            InventoryController.lightString += "4";
+            sconeCount++;
+            Debug.Log(InventoryController.lightString);
+            //InventoryController.sconeText.text += "Scone 4 lit... ";
+        }
     }
     public void TakeDmg()
     {
@@ -588,11 +658,19 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = true; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
+        //if (other.CompareTag("SR1")) { Debug.Log("In Scone1 range"); InventoryController.inRangeS1 = true; }
+        //if (other.CompareTag("SR2")) { Debug.Log("In Scone2 range"); InventoryController.inRangeS2 = true; }
+        //if (other.CompareTag("SR3")) { Debug.Log("In Scone3 range"); InventoryController.inRangeS3 = true; }
+        //if (other.CompareTag("SR4")) { Debug.Log("In Scone4 range"); InventoryController.inRangeS4 = true; }
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = false; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
+        //if (other.CompareTag("SR1")) { Debug.Log("Out of Scone1 range"); InventoryController.inRangeS1 = false; }
+        //if (other.CompareTag("SR2")) { Debug.Log("Out of Scone2 range"); InventoryController.inRangeS1 = false; }
+        //if (other.CompareTag("SR3")) { Debug.Log("Out of Scone3 range"); InventoryController.inRangeS1 = false; }
+        //if (other.CompareTag("SR4")) { Debug.Log("Out of Scone4 range"); InventoryController.inRangeS1 = false; }
     }
 }
