@@ -41,6 +41,8 @@ public class InventoryController : MonoBehaviour
     public GameObject fireParent;
     [HideInInspector] public bool inRangeCanteen;
     [SerializeField] AudioClip sizzleFire;
+
+    [Header("Audio")]
     public AudioClip fireSuccess;
     public AudioClip noneed;
     public AudioClip lightout;
@@ -56,20 +58,13 @@ public class InventoryController : MonoBehaviour
     public AudioClip flashlightSFX;
 
     AudioSource audioSource;
-    [Header("Scones")]
-    public bool inRangeS1;
-    public bool inRangeS2;
-    public bool inRangeS3;
-    public bool inRangeS4;
-    public GameObject lights1;
-    public GameObject lights2;
-    public GameObject lights3;
-    public GameObject lights4;
-    public string lightString;
-    //public int lightCount;
-    public GameObject sconeDoor;
-    public TextMeshProUGUI sconeText;
 
+    [Header("GhostPuzzle")]
+    public bool hasRose;
+    public GameObject roseImg;
+    bool canRose;
+    float roseCD = 90f;
+    public BriarRose BriarRose;
 
     public GameObject helpPanel;
     bool helpOpen;
@@ -93,9 +88,10 @@ public class InventoryController : MonoBehaviour
             laudanumCharges = 0;
             canteenCount = 0;
         }
-        sconeText.text = "";
+        //sconeText.text = "";
         helpOpen = false;
         helpPanel.SetActive(false);
+        roseImg.SetActive(false);
     }
 
     private void Update()
@@ -110,7 +106,7 @@ public class InventoryController : MonoBehaviour
         bulbChargeDisplay.text = "(" + bulbChargeText + ")";
         laudanumChargeDisplay.text = "(" + laudinumChargeText + ")";
         canteenChargeDisplay.text = "(" + canteenCountText + ")";
-        lights1.SetActive(false); lights2.SetActive(false); lights3.SetActive(false); lights4.SetActive(false);
+        //lights1.SetActive(false); lights2.SetActive(false); lights3.SetActive(false); lights4.SetActive(false);
         if (flLife < 0) flLife = 0;
         if (flLife >= 100) flLife = 100;
         if (!hasMatches) { matchImg.SetActive(false); }
@@ -146,12 +142,6 @@ public class InventoryController : MonoBehaviour
                 flWarningTextShown = true;
             }
         }
-
-        //if (Input.GetKeyDown(KeyCode.Escape))     //i KNOW this should go in UI controller but like for whatever reason nothing was showing up in inspector. idfk. i literally copy pasted the code over to here and it makes no gd sense. code spaghetti idc.
-        //{
-        //    if (!helpOpen) { helpPanel.SetActive(true); helpOpen = true; }
-        //    if (helpOpen) { helpPanel.SetActive(false); helpOpen = false; }
-        //}
 
         if (Input.GetKeyDown("1"))
         {
@@ -249,34 +239,46 @@ public class InventoryController : MonoBehaviour
                 StartCoroutine(successdelay());
             }
         }
+        if (Input.GetKeyDown("6"))
+        {
+            if (hasMatches) PlayerController.Instance.LightCandle();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha7))   // same style as 1–6
+        {
+            Debug.Log("7 pressed in InventoryController");
+
+            Debug.Log("Has rose: " + hasRose);
+
+            if (!hasRose)
+            {
+                Debug.Log("Cannot turn in rose: player has no rose.");
+                return;
+            }
+
+            if (BriarRose.Instance == null)
+            {
+                Debug.LogWarning("No BriarRose.Instance found in scene.");
+                return;
+            }
+
+            if (!BriarRose.Instance.inRoseRange)
+            {
+                Debug.Log("Cannot turn in rose: not in BriarRose range.");
+                return;
+            }
+
+            BriarRose.Instance.TurnInRose();
+            Debug.Log("TurnInRose() called on BriarRose");
+        }
     }
 
-        //    if (Input.GetKeyDown("6"))           //*does a hail mary*,, blessed be thy father in heaven or w/e the catholics say when something unholy needs to be sanctified... or at least optimized.
-        //    {
-        //        //if (!hasMatches) { FeedbackBanner.Instance.Show("I can't use that yet."); }
-        //        //if (hasMatches) 
-        //        //{
-        //            //if (inRangeS1) { lights1.SetActive(true); Debug.Log("Lit 1"); lightCount++; lightString += "1"; sconeText.text += "First scone lit... "; Debug.Log(lightString); }
-        //            //else if (inRangeS2) { lights2.SetActive(true); Debug.Log("Lit 2"); lightCount++; lightString += "2"; sconeText.text += "Second scone lit... "; Debug.Log(lightString); }
-        //            //else if (inRangeS3) { lights3.SetActive(true); Debug.Log("Lit 3"); lightCount++; lightString += "3"; sconeText.text += "Third scone lit... "; Debug.Log(lightString); }
-        //            //else if (inRangeS4) { lights4.SetActive(true); Debug.Log("Lit 4"); lightCount++; lightString += "4"; sconeText.text += "Fourth scone lit... "; Debug.Log(lightString); }
-        //            //else { Debug.Log("something wrong :("); }
-        //    //    }
-        //    //}
-    //    if (sconeCount >= 3)         //goes w 6 i pwomise
-    //    {
-    //        lightCount = 0;
-    //        if (lightString == "143") 
-    //        {
-    //            FeedbackBanner.Instance.Show("Seems that worked. Let's see what's through this door.");
-    //            Debug.Log("Puzzle solved");
-    //            lights2.SetActive(true); 
-    //            sconeDoor.SetActive(false);
-    //            sconeText.text = ""; }
-    //        else { lightString = ""; lights1.SetActive(false); lights2.SetActive(false); lights3.SetActive(false); lights4.SetActive(false); FeedbackBanner.Instance.Show("Hmm... Let's try that again."); sconeText.text = ""; }    //reset
-    //    }
-    //}
-
+    private IEnumerator RoseCD()       //cd for sanity/stam restore
+    {
+        canRose = false;
+        yield return new WaitForSeconds(roseCD);
+        canRose = true;
+    }
     private IEnumerator successdelay()
     {
         audioSource.PlayOneShot(sizzleFire);

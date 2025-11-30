@@ -27,6 +27,11 @@ TagManager:
   - SR2
   - SR3
   - SR4
+  - Tombstone
+  - GYCandle
+  - GhostGirl
+  - Rose
+  - Ladder
   layers:
   - Default
   - TransparentFX

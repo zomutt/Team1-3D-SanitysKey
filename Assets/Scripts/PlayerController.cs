@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public bool canMove = true;
 
     [Header("Damage")]
-    [SerializeField] HurtOverlay HurtOverlay;   
+    [SerializeField] HurtOverlay HurtOverlay;
 
     //Input Actions (created in code, no PlayerInput needed)
     [Header("InputActions")]
@@ -69,7 +69,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] CrosshairController CrosshairController;
     bool isFlashOn; //needed for entity dispersement
     public bool hasKey1;
-    public DoorController DoorController;
+    [SerializeField] private LayerMask interactLayerMask;
+
     [Header("Interaction UI")]
     Collider currentAimCollider;
 
@@ -93,6 +94,8 @@ public class PlayerController : MonoBehaviour
     public GameObject particle3;
     public GameObject particle4;
     public GameObject lightDoor;
+    public GhostController GhostController;
+
     [Header("Audio")]
     AudioSource audioSource;
     public AudioClip sizzle;
@@ -159,7 +162,7 @@ public class PlayerController : MonoBehaviour
         particle4.SetActive(false);
         lightDoor.SetActive(false);
     }
-        void OnEnable()
+    void OnEnable()
     {
         moveAction.Enable();
         lookAction.Enable();
@@ -202,7 +205,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    void Update()   
+    void Update()
     {
         // --- Sanity warning messages ---
 
@@ -301,8 +304,8 @@ public class PlayerController : MonoBehaviour
             FeedbackBanner.Instance.Show("I'm too tired for that.");
             audioSource.PlayOneShot(nostam);
         }
-            // Optional: keep controller “stuck” to ground/slopes
-            if (grounded && moveDirection.y < 0f)
+        // Optional: keep controller “stuck” to ground/slopes
+        if (grounded && moveDirection.y < 0f)
             moveDirection.y = -2f;
 
         // 5) Gravity
@@ -345,29 +348,27 @@ public class PlayerController : MonoBehaviour
             if (pSanity > pSanityMax) pSanity = pSanityMax;
         }
 
-        if (sconeCount >= 3)          //this is for the hallway/scone puzzle, it's kinda code spaghetti tbh
-        {
-            if (InventoryController.lightString == "143")
-            {
-                FeedbackBanner.Instance.Show("That did the trick! Let's go through this door.");
-                particle2.SetActive(true);
-                lightDoor.SetActive(false);
-            }
-            if (InventoryController.lightString != "143")
-            {
-                FeedbackBanner.Instance.Show("Hm... Maybe let's try a different order. There may be a clue around here somewhere.");
-                particle1.SetActive(false);
-                particle2.SetActive(false);
-                particle3.SetActive(false);
-                particle4.SetActive(false);
-                InventoryController.lightString = "";
-            }
-        }
+        //if (sconeCount >= 3)          //this is for the hallway/scone puzzle, it's kinda code spaghetti tbh hence why this is commented out.... its bad lol
+        //{
+        //    if (InventoryController.lightString == "143")
+        //    {
+        //        //FeedbackBanner.Instance.Show("That did the trick! Let's go through this door.");
+        //        particle2.SetActive(true);
+        //        lightDoor.SetActive(false);
+        //    }
+        //    if (InventoryController.lightString != "143")
+        //    {
+        //        FeedbackBanner.Instance.Show("Hm... Maybe let's try a different order. There may be a clue around here somewhere.");
+        //        particle1.SetActive(false);
+        //        particle2.SetActive(false);
+        //        particle3.SetActive(false);
+        //        particle4.SetActive(false);
+        //        InventoryController.lightString = "";
+        //    }
+        //}
 
         UpdateAimTarget();   //make sure this stays at end of Update method
-        UpdateAimTarget();
         HandleInteraction();
-
     }
 
     void UpdateAimTarget()           //i found this online so i'm not like.... super... sure how it works, but it feels p straightforward and it works
@@ -426,6 +427,14 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        IInteractable interactable = currentAimCollider.GetComponentInParent<IInteractable>();     //your programmer leveled tf upppp, interfaces are neat and basically tell the code to fire WITHOUT the need for an endless if/else chain
+        if (interactable != null)
+        {
+            interactable.Interact(this);
+            return;    // stop here; the object has done its thing
+        }
+
+        //old logic//fallback code,, you cant make me optimize my code when we're this short on time
         GameObject targetObject = currentAimCollider.gameObject;
 
         if (targetObject.CompareTag("MedPack"))
@@ -504,45 +513,58 @@ public class PlayerController : MonoBehaviour
             InventoryController.hasMatches = true;
             FeedbackBanner.Instance.Show("Some matches... This may come in handy.");
         }
-        else if (targetObject.CompareTag("Scone1") && InventoryController.hasMatches)
+        //else if (targetObject.CompareTag("Scone1") && InventoryController.hasMatches)
+        //{
+        //    FeedbackBanner.Instance.Show("Scone 1 lit...");
+        //    particle1.SetActive(true);
+        //    InventoryController.lights1.SetActive(true);
+        //    InventoryController.lightString += "1";
+        //    sconeCount++;
+        //    Debug.Log(InventoryController.lightString);
+        //    //InventoryController.sconeText.text += "Scone 1 lit... ";
+        //}
+        //else if (targetObject.CompareTag("Scone2") && InventoryController.hasMatches)
+        //{
+        //    FeedbackBanner.Instance.Show("Scone 2 lit...");
+        //    particle2.SetActive(true);
+        //    InventoryController.lights2.SetActive(true);
+        //    InventoryController.lightString += "2";
+        //    sconeCount++;
+        //    Debug.Log(InventoryController.lightString);
+        //    //InventoryController.sconeText.text += "Scone 2 lit... ";
+        //}
+        //else if (targetObject.CompareTag("Scone3") && InventoryController.hasMatches)
+        //{
+        //    FeedbackBanner.Instance.Show("Scone 3 lit...");
+        //    particle3.SetActive(true);
+        //    InventoryController.lights1.SetActive(true);
+        //    InventoryController.lightString += "3";
+        //    sconeCount++;
+        //    Debug.Log(InventoryController.lightString);
+        //    //InventoryController.sconeText.text += "Scone 3 lit... ";
+        //}
+        //else if (targetObject.CompareTag("Scone4") && InventoryController.hasMatches)
+        //{
+        //    FeedbackBanner.Instance.Show("Scone 4 lit...");
+        //    particle4.SetActive(true);
+        //    InventoryController.lights1.SetActive(true);
+        //    InventoryController.lightString += "4";
+        //    sconeCount++;
+        //    Debug.Log(InventoryController.lightString);
+        //    //InventoryController.sconeText.text += "Scone 4 lit... ";
+        //}
+        else if (targetObject.CompareTag("Rose"))
         {
-            FeedbackBanner.Instance.Show("Scone 1 lit...");
-            particle1.SetActive(true);
-            InventoryController.lights1.SetActive(true);
-            InventoryController.lightString += "1";
-            sconeCount++;
-            Debug.Log(InventoryController.lightString);
-            //InventoryController.sconeText.text += "Scone 1 lit... ";
-        }
-        else if (targetObject.CompareTag("Scone2") && InventoryController.hasMatches)
-        {
-            FeedbackBanner.Instance.Show("Scone 2 lit...");
-            particle2.SetActive(true);
-            InventoryController.lights2.SetActive(true);
-            InventoryController.lightString += "2";
-            sconeCount++;
-            Debug.Log(InventoryController.lightString);
-            //InventoryController.sconeText.text += "Scone 2 lit... ";
-        }
-        else if (targetObject.CompareTag("Scone3") && InventoryController.hasMatches)
-        {
-            FeedbackBanner.Instance.Show("Scone 3 lit...");
-            particle3.SetActive(true);
-            InventoryController.lights1.SetActive(true);
-            InventoryController.lightString += "3";
-            sconeCount++;
-            Debug.Log(InventoryController.lightString);
-            //InventoryController.sconeText.text += "Scone 3 lit... ";
-        }
-        else if (targetObject.CompareTag("Scone4") && InventoryController.hasMatches)
-        {
-            FeedbackBanner.Instance.Show("Scone 4 lit...");
-            particle4.SetActive(true);
-            InventoryController.lights1.SetActive(true);
-            InventoryController.lightString += "4";
-            sconeCount++;
-            Debug.Log(InventoryController.lightString);
-            //InventoryController.sconeText.text += "Scone 4 lit... ";
+            Debug.Log("Rose interacted");
+            if (!GhostController.ghostAwakened) { FeedbackBanner.Instance.Show("These roses are absolutely beautiful. Let's respect the dead and leave them be, lest we anger the deceased."); }
+            else
+            {
+                FeedbackBanner.Instance.Show("Some beautiful roses are growing on this grave... This seems to be what Briar Rose has been looking for -- OW! That's sharp.");
+                pHP -= 10;
+                targetObject.SetActive(false);
+                InventoryController.hasRose = true;
+                InventoryController.roseImg.SetActive(true);
+            }
         }
     }
     public void TakeDmg()
@@ -558,7 +580,6 @@ public class PlayerController : MonoBehaviour
         }
         else { return; }
     }
-
     IEnumerator iframe()
     {
         canDmg = false;
@@ -658,19 +679,38 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = true; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
-        //if (other.CompareTag("SR1")) { Debug.Log("In Scone1 range"); InventoryController.inRangeS1 = true; }
-        //if (other.CompareTag("SR2")) { Debug.Log("In Scone2 range"); InventoryController.inRangeS2 = true; }
-        //if (other.CompareTag("SR3")) { Debug.Log("In Scone3 range"); InventoryController.inRangeS3 = true; }
-        //if (other.CompareTag("SR4")) { Debug.Log("In Scone4 range"); InventoryController.inRangeS4 = true; }
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = false; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
-        //if (other.CompareTag("SR1")) { Debug.Log("Out of Scone1 range"); InventoryController.inRangeS1 = false; }
-        //if (other.CompareTag("SR2")) { Debug.Log("Out of Scone2 range"); InventoryController.inRangeS1 = false; }
-        //if (other.CompareTag("SR3")) { Debug.Log("Out of Scone3 range"); InventoryController.inRangeS1 = false; }
-        //if (other.CompareTag("SR4")) { Debug.Log("Out of Scone4 range"); InventoryController.inRangeS1 = false; }
+    }
+
+    public void LightCandle()
+    {
+        if (!InventoryController.hasMatches)
+        { FeedbackBanner.Instance.Show("I don't have any way to light this."); return; }
+
+        if (currentAimCollider == null) { FeedbackBanner.Instance.Show("I need something to light first."); return;}
+
+        float distanceToTarget = Vector3.Distance(playerCamera.transform.position, currentAimCollider.transform.position); //DISTANCE CHECK
+
+        if (distanceToTarget > interactRange) 
+        { 
+            FeedbackBanner.Instance.Show("I need to get closer."); 
+            audioSource.PlayOneShot(norange); 
+            return; 
+        }
+
+        Candles candle = currentAimCollider.GetComponentInParent<Candles>();       //this checks for script on object or one of its parents
+        if (candle == null)
+        {
+            FeedbackBanner.Instance.Show("That won't help me here.");
+            return;
+        }
+
+        candle.LightCandle();
     }
 }
+
