@@ -56,6 +56,7 @@ public class InventoryController : MonoBehaviour
     public AudioClip canteenfail;
     public AudioClip bulbout;
     public AudioClip flashlightSFX;
+    
 
     AudioSource audioSource;
 

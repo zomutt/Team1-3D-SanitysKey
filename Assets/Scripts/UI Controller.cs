@@ -57,17 +57,17 @@ public class UIController : MonoBehaviour
         sanityText.text = PlayerController.pSanity.ToString("F0") + "%";
         flLifeText.text = InventoryController.flLife.ToString("F0") + "%";
 
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Debug.Log("Escape Pressed");
-            if (!helpOpen) 
-            { 
-                helpPanel.SetActive(true); 
-                helpOpen = true;
-                Debug.Log("Opening help panel");
-            }
-            if (helpOpen) { helpPanel.SetActive(false); helpOpen = false; }
-        }
+        //if (Input.GetKeyDown(KeyCode.Escape))
+        //{
+        //    Debug.Log("Escape Pressed");
+        //    if (!helpOpen) 
+        //    { 
+        //        helpPanel.SetActive(true); 
+        //        helpOpen = true;
+        //        Debug.Log("Opening help panel");
+        //    }
+        //    if (helpOpen) { helpPanel.SetActive(false); helpOpen = false; }
+        //}
     }
-    public void RestartGameOnClick() { SceneManager.LoadScene("Level1"); }        //needed for restart via help menu
+    //public void RestartGameOnClick() { SceneManager.LoadScene("Level1"); }        //needed for restart via help menu
 }

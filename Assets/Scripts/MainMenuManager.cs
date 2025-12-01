@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-public class MainMenuManager : MonoBehaviour
+public class Manager : MonoBehaviour
 {
     public GameObject HelpPanel;
     public GameObject ObjPanel;

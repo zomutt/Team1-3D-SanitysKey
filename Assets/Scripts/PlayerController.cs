@@ -95,6 +95,7 @@ public class PlayerController : MonoBehaviour
     public GameObject particle4;
     public GameObject lightDoor;
     public GhostController GhostController;
+    public DeathSceneManager DeathSceneManager;
 
     [Header("Audio")]
     AudioSource audioSource;
@@ -119,6 +120,7 @@ public class PlayerController : MonoBehaviour
     public AudioClip bulb;
     public AudioClip walkingSFX;
     public AudioClip runningSFX;
+    public AudioClip DeathSequence;
     void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -259,11 +261,11 @@ public class PlayerController : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             Time.timeScale = 1f;
-
-            // IMPORTANT: remove the persistent player before swapping scenes
-            Destroy(gameObject);  // <- this is the singleton Player
-
-            SceneManager.LoadScene("LostGG", LoadSceneMode.Single);
+            
+            canMove = false;
+            canJump = false;
+            DeathSceneManager.DeathScene();     //opens panel for it
+            audioSource.PlayOneShot(DeathSequence);
         }
 
 
@@ -347,25 +349,6 @@ public class PlayerController : MonoBehaviour
             pSanity += pSanityRegen * Time.deltaTime;
             if (pSanity > pSanityMax) pSanity = pSanityMax;
         }
-
-        //if (sconeCount >= 3)          //this is for the hallway/scone puzzle, it's kinda code spaghetti tbh hence why this is commented out.... its bad lol
-        //{
-        //    if (InventoryController.lightString == "143")
-        //    {
-        //        //FeedbackBanner.Instance.Show("That did the trick! Let's go through this door.");
-        //        particle2.SetActive(true);
-        //        lightDoor.SetActive(false);
-        //    }
-        //    if (InventoryController.lightString != "143")
-        //    {
-        //        FeedbackBanner.Instance.Show("Hm... Maybe let's try a different order. There may be a clue around here somewhere.");
-        //        particle1.SetActive(false);
-        //        particle2.SetActive(false);
-        //        particle3.SetActive(false);
-        //        particle4.SetActive(false);
-        //        InventoryController.lightString = "";
-        //    }
-        //}
 
         UpdateAimTarget();   //make sure this stays at end of Update method
         HandleInteraction();
@@ -513,46 +496,7 @@ public class PlayerController : MonoBehaviour
             InventoryController.hasMatches = true;
             FeedbackBanner.Instance.Show("Some matches... This may come in handy.");
         }
-        //else if (targetObject.CompareTag("Scone1") && InventoryController.hasMatches)
-        //{
-        //    FeedbackBanner.Instance.Show("Scone 1 lit...");
-        //    particle1.SetActive(true);
-        //    InventoryController.lights1.SetActive(true);
-        //    InventoryController.lightString += "1";
-        //    sconeCount++;
-        //    Debug.Log(InventoryController.lightString);
-        //    //InventoryController.sconeText.text += "Scone 1 lit... ";
-        //}
-        //else if (targetObject.CompareTag("Scone2") && InventoryController.hasMatches)
-        //{
-        //    FeedbackBanner.Instance.Show("Scone 2 lit...");
-        //    particle2.SetActive(true);
-        //    InventoryController.lights2.SetActive(true);
-        //    InventoryController.lightString += "2";
-        //    sconeCount++;
-        //    Debug.Log(InventoryController.lightString);
-        //    //InventoryController.sconeText.text += "Scone 2 lit... ";
-        //}
-        //else if (targetObject.CompareTag("Scone3") && InventoryController.hasMatches)
-        //{
-        //    FeedbackBanner.Instance.Show("Scone 3 lit...");
-        //    particle3.SetActive(true);
-        //    InventoryController.lights1.SetActive(true);
-        //    InventoryController.lightString += "3";
-        //    sconeCount++;
-        //    Debug.Log(InventoryController.lightString);
-        //    //InventoryController.sconeText.text += "Scone 3 lit... ";
-        //}
-        //else if (targetObject.CompareTag("Scone4") && InventoryController.hasMatches)
-        //{
-        //    FeedbackBanner.Instance.Show("Scone 4 lit...");
-        //    particle4.SetActive(true);
-        //    InventoryController.lights1.SetActive(true);
-        //    InventoryController.lightString += "4";
-        //    sconeCount++;
-        //    Debug.Log(InventoryController.lightString);
-        //    //InventoryController.sconeText.text += "Scone 4 lit... ";
-        //}
+
         else if (targetObject.CompareTag("Rose"))
         {
             Debug.Log("Rose interacted");
