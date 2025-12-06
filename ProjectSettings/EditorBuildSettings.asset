@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level1.unity
     guid: 2e9633dc89ee30a44873a6e3aec64ed6
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/LostGG.unity
     guid: 7461af30c31328340972bf92d84a3a45
   - enabled: 0

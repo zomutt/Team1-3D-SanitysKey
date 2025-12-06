@@ -32,6 +32,9 @@ TagManager:
   - GhostGirl
   - Rose
   - Ladder
+  - BirthCertificate
+  - Safe
+  - Door2
   layers:
   - Default
   - TransparentFX
