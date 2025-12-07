@@ -20,10 +20,6 @@ public class Candles : MonoBehaviour
         if (fireFX != null) { fireFX.SetActive(false); } 
     }
     public void LightCandle()
-    //{
-    //    if (isLit) { return; }
-
-    //    isLit = true;
     { 
         if (gameObject.name == "Candle") { GhostController.candlesLit++; }
         if (gameObject.name == "scone1") { SconeManager.sconeString += "1"; SconeManager.sconeCount++; }

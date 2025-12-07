@@ -15,7 +15,6 @@ public class GhostController : MonoBehaviour
     private void Awake()
     {
         tombstoneInteracted = false;
-        ghostText.text = "";
         ghostGirl.SetActive(false);
         //ladder.SetActive(false);
 

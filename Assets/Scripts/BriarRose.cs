@@ -48,8 +48,8 @@ public class BriarRose : MonoBehaviour
 
     private void OnEnable()
     {
-        activeDialogueRoutine = StartCoroutine(FadeDialogue("Oh, hi. Can you hear them too? The whispers? I can tell you're not one of them. Perhaps you can help me? I can provide what you need in kind."));
-        StartCoroutine(ChatCD()); 
+        MiscFeedbackBanner.Instance.Show("Oh, hi. Can you hear them too? The whispers? I can tell you're not one of them. Perhaps you can help me? I can provide what you need in kind.");
+        //StartCoroutine(ChatCD()); 
         dialogueStep++;
     }
     private void OnTriggerStay(Collider other)
@@ -80,43 +80,43 @@ public class BriarRose : MonoBehaviour
         // FROM HERE ON: safe to start a new line
         if (dialogueStep == 0)       // fallback 1st go
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "Oh, hi. Can you hear them too? The whispers? I can tell you're not one of them."));
+            MiscFeedbackBanner.Instance.Show(
+                "Oh, hi. Can you hear them too? The whispers? I can tell you're not one of them.");
             dialogueStep++;
             StartCoroutine(ChatCD());
         }
         else if (dialogueStep == 1)
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "Mama still keeps something dear to us close to her, but I can't reach it."));
+            MiscFeedbackBanner.Instance.Show(
+                "Mama still keeps something dear to us close to her, but I can't reach it.");
             dialogueStep++;
             StartCoroutine(ChatCD());
         }
         else if (dialogueStep == 2)
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "Mama's slumber is also restless... Perhaps helping us can also bring peace to yourself."));
+            MiscFeedbackBanner.Instance.Show(
+                "Mama's slumber is also restless... Perhaps helping us can also bring peace to yourself.");
             dialogueStep++;
             StartCoroutine(ChatCD());
         }
         else if (dialogueStep == 3)
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "They lay us out for eternal rest, yet only one of us remembers how to bloom."));
+            MiscFeedbackBanner.Instance.Show(
+                "They lay us out for eternal rest, yet only one of us remembers how to bloom.");
             dialogueStep = 1;
             StartCoroutine(ChatCD());
         }
         else if (dialogueStep == 4 || dialogueStep == 5)
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "You've gotten me my roses, thank you. Please, hurry and leave before the whispers consume you as well. Don't forget to hold your own rose close when the whispers close in."));
+            MiscFeedbackBanner.Instance.Show(
+                "You've gotten me my roses, thank you. Please, hurry and leave before the whispers consume you as well. Don't forget to hold your own rose close when the whispers close in.");
             dialogueStep++;
             StartCoroutine(ChatCD());
         }
         else if (dialogueStep == 6)
         {
-            activeDialogueRoutine = StartCoroutine(FadeDialogue(
-                "No, voices... no, stay away from her... she's kind."));
+            MiscFeedbackBanner.Instance.Show(
+                "No, voices... no, stay away from her... she's kind.");
             dialogueStep = 4;
             StartCoroutine(ChatCD());
         }
@@ -132,8 +132,8 @@ public class BriarRose : MonoBehaviour
     {
         Debug.Log("BR script: TurnInRose triggered");
 
-        activeDialogueRoutine = StartCoroutine(FadeDialogueLong(
-            "Yes! Yes! Roses from mama! Thank you! Here, I'll show you the way out. Turn around, a hidden ladder will appear. Please, hurry and leave before the whispers consume you as well. And please... keep a rose. They provide me with comfort in the dark, maybe one can help you too."));
+        MiscFeedbackBanner.Instance.Show(
+            "Yes! Yes! Roses from mama! Thank you! Here, I'll show you the way out. Turn around, a hidden ladder will appear. Please, hurry and leave before the whispers consume you as well. And please... keep a rose. They provide me with comfort in the dark, maybe one can help you too.");
 
         StartCoroutine(ChatCD());
         ladder.SetActive(true);

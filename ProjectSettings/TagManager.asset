@@ -35,6 +35,14 @@ TagManager:
   - BirthCertificate
   - Safe
   - Door2
+  - Mirror
+  - Key2
+  - Rosalin
+  - Kitty
+  - KittyRange
+  - CatToy
+  - RosalinRange
+  - Key3
   layers:
   - Default
   - TransparentFX

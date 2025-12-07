@@ -3,6 +3,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.ProBuilder.MeshOperations;
 using UnityEngine.SceneManagement;
 
 public class InventoryController : MonoBehaviour
@@ -42,6 +43,17 @@ public class InventoryController : MonoBehaviour
     [HideInInspector] public bool inRangeCanteen;
     [SerializeField] AudioClip sizzleFire;
 
+    public bool hasToy;
+    bool canPlay = true;
+    public GameObject toyImg;
+    public bool inCatRange;
+    bool hasPlayed;
+    public CatWalk catWalk;
+    
+
+
+    public bool canUseInv;   //sometimes the num keys should be disabled, e.g. during cutscenes, certain quests, etc.
+
     [Header("Audio")]
     public AudioClip fireSuccess;
     public AudioClip noneed;
@@ -71,6 +83,7 @@ public class InventoryController : MonoBehaviour
     bool helpOpen;
     private void Awake()
     {
+        catWalk = FindFirstObjectByType<CatWalk>();
         audioSource = GetComponent<AudioSource>();
         flashlightOn = false;
         flDirectionalLight.SetActive(false);
@@ -91,8 +104,13 @@ public class InventoryController : MonoBehaviour
         }
         //sconeText.text = "";
         helpOpen = false;
+        hasToy = false;
         helpPanel.SetActive(false);
         roseImg.SetActive(false);
+        toyImg.SetActive(false);
+        canUseInv = true;
+        canPlay = true;
+        hasPlayed = false;
     }
 
     private void Update()
@@ -112,6 +130,7 @@ public class InventoryController : MonoBehaviour
         if (flLife >= 100) flLife = 100;
         if (!hasMatches) { matchImg.SetActive(false); }
         if (hasMatches) { matchImg.SetActive(true); }
+        if (hasToy) { toyImg.SetActive(true); }
 
         if (flashlightOn)
         {
@@ -143,134 +162,163 @@ public class InventoryController : MonoBehaviour
                 flWarningTextShown = true;
             }
         }
-
-        if (Input.GetKeyDown("1"))
+        if (canUseInv)
         {
-            if (flLife < 1)
+            if (Input.GetKeyDown("1"))
             {
-                FeedbackBanner.Instance.Show("The bulb on this is out.");
-                audioSource.PlayOneShot(lightfail);
-            }
-            else if (!flashlightOn && flLife > 1)   // turn ON
-            {
-                flDirectionalLight.SetActive(true);
-                flashlightCone.SetActive(true);
-                audioSource.PlayOneShot(flashlightSFX);
-                flashlightOn = true;
-                Debug.Log("Turning ON FL");
-            }
-            else if (flashlightOn)                  // turn OFF
-            {
-                flDirectionalLight.SetActive(false);
-                flashlightCone.SetActive(false);
-                audioSource.PlayOneShot(flashlightSFX);
-                flashlightOn = false;
-                Debug.Log("Turning OFF FL");
-            }
-        }
-
-        if (Input.GetKeyDown("2"))
-        {
-            if (PlayerController.pHP >= 100)
-            {
-                FeedbackBanner.Instance.Show("I don't need to use that yet.");
-                audioSource.PlayOneShot(noneed);
-            }
-            else if ((PlayerController.pHP < 100 && medCharges > 0))
-            {
-                PlayerController.pHP += medpackHeal;
-                Debug.Log("Player healed for: " + medpackHeal + " new HP: " + PlayerController.pHP);
-                FeedbackBanner.Instance.Show("Much better.");
-                audioSource.PlayOneShot(healsuccess);
-                medCharges -= 1;
-            }
-            else if (medCharges < 1)
-            {
-                FeedbackBanner.Instance.Show("I need to find more medpacks");
-                audioSource.PlayOneShot(healfail);
-            }
-        }
-
-        if (Input.GetKeyDown("3"))
-        {
-            if (bulbCharges < 1)
-            {
-                FeedbackBanner.Instance.Show("I need to find more lightbulbs");
-                audioSource.PlayOneShot(bulbout);
-            }
-            else { flLife += bulbRestore; }
-        }
-        if (Input.GetKeyDown("4"))
-        {
-            if (laudanumCharges < 1)
-            {
-                FeedbackBanner.Instance.Show("I need to find more laudanum.");
-                audioSource.PlayOneShot(laudanumfail);
-            }
-            else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
-            {
-                FeedbackBanner.Instance.Show("I don't need to use that yet.");
-                audioSource.PlayOneShot(laudanumfull);
-            }
-            else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
-            {
-                FeedbackBanner.Instance.Show("Ah, I feel much more grounded now.");
-                audioSource.PlayOneShot(laudanumsuccess);
-                PlayerController.pSanity += laudanumRestore;
-            }
-        }
-        if (Input.GetKeyDown("5"))
-        {
-            if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0))
-            {
-                filledCanteenCount++; FeedbackBanner.Instance.Show("This water is gross, but I'll fill my canteen with it anyways.");
-                audioSource.PlayOneShot(PlayerController.watersuccess);
-            }
-            else if (filledCanteenCount > 0 && !inRangeCanteen)
-            {
-                Debug.Log("In range: " + inRangeCanteen);
-                FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here.");
-                audioSource.PlayOneShot(canteenfail);
-            }
-            else if (filledCanteenCount > 0 && inRangeCanteen)
-            {
-                FeedbackBanner.Instance.Show("Aha! I knew it. Let's check this out.");
-                canteenCount--;
-                fireParent.SetActive(false);
-                StartCoroutine(successdelay());
-            }
-        }
-        if (Input.GetKeyDown("6"))
-        {
-            if (hasMatches) PlayerController.Instance.LightCandle();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha7))   // same style as 1–6
-        {
-            Debug.Log("7 pressed in InventoryController");
-
-            Debug.Log("Has rose: " + hasRose);
-
-            if (!hasRose)
-            {
-                Debug.Log("Cannot turn in rose: player has no rose.");
-                return;
+                if (flLife < 1)
+                {
+                    FeedbackBanner.Instance.Show("The bulb on this is out.");
+                    audioSource.PlayOneShot(lightfail);
+                }
+                else if (!flashlightOn && flLife > 1)   // turn ON
+                {
+                    flDirectionalLight.SetActive(true);
+                    flashlightCone.SetActive(true);
+                    audioSource.PlayOneShot(flashlightSFX);
+                    flashlightOn = true;
+                    Debug.Log("Turning ON FL");
+                }
+                else if (flashlightOn)                  // turn OFF
+                {
+                    flDirectionalLight.SetActive(false);
+                    flashlightCone.SetActive(false);
+                    audioSource.PlayOneShot(flashlightSFX);
+                    flashlightOn = false;
+                    Debug.Log("Turning OFF FL");
+                }
             }
 
-            if (BriarRose.Instance == null)
+            if (Input.GetKeyDown("2"))
             {
-                Debug.LogWarning("No BriarRose.Instance found in scene.");
-                return;
+                if (PlayerController.pHP >= 100)
+                {
+                    FeedbackBanner.Instance.Show("I don't need to use that yet.");
+                    audioSource.PlayOneShot(noneed);
+                }
+                else if ((PlayerController.pHP < 100 && medCharges > 0))
+                {
+                    PlayerController.pHP += medpackHeal;
+                    Debug.Log("Player healed for: " + medpackHeal + " new HP: " + PlayerController.pHP);
+                    FeedbackBanner.Instance.Show("Much better.");
+                    audioSource.PlayOneShot(healsuccess);
+                    medCharges -= 1;
+                }
+                else if (medCharges < 1)
+                {
+                    FeedbackBanner.Instance.Show("I need to find more medpacks");
+                    audioSource.PlayOneShot(healfail);
+                }
             }
 
-            if (!BriarRose.Instance.inRoseRange)
+            if (Input.GetKeyDown("3"))
             {
-                Debug.Log("Cannot turn in rose: not in BriarRose range.");
-                return;
+                if (bulbCharges < 1)
+                {
+                    FeedbackBanner.Instance.Show("I need to find more lightbulbs");
+                    audioSource.PlayOneShot(bulbout);
+                }
+                else { flLife += bulbRestore; }
+            }
+            if (Input.GetKeyDown("4"))
+            {
+                if (laudanumCharges < 1)
+                {
+                    FeedbackBanner.Instance.Show("I need to find more laudanum.");
+                    audioSource.PlayOneShot(laudanumfail);
+                }
+                else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
+                {
+                    FeedbackBanner.Instance.Show("I don't need to use that yet.");
+                    audioSource.PlayOneShot(laudanumfull);
+                }
+                else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
+                {
+                    FeedbackBanner.Instance.Show("Ah, I feel much more grounded now.");
+                    audioSource.PlayOneShot(laudanumsuccess);
+                    PlayerController.pSanity += laudanumRestore;
+                }
+            }
+            if (Input.GetKeyDown("5"))
+            {
+                if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0))
+                {
+                    filledCanteenCount++; FeedbackBanner.Instance.Show("This water is gross, but I'll fill my canteen with it anyways.");
+                    audioSource.PlayOneShot(PlayerController.watersuccess);
+                }
+                else if (filledCanteenCount > 0 && !inRangeCanteen)
+                {
+                    Debug.Log("In range: " + inRangeCanteen);
+                    FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here.");
+                    audioSource.PlayOneShot(canteenfail);
+                }
+                else if (filledCanteenCount > 0 && inRangeCanteen)
+                {
+                    FeedbackBanner.Instance.Show("Aha! I knew it. Let's check this out.");
+                    canteenCount--;
+                    fireParent.SetActive(false);
+                    StartCoroutine(successdelay());
+                }
+            }
+            if (Input.GetKeyDown("6"))
+            {
+                if (hasMatches) PlayerController.Instance.LightCandle();
             }
 
-            BriarRose.Instance.TurnInRose();
-            Debug.Log("TurnInRose() called on BriarRose");
+            if (Input.GetKeyDown(KeyCode.Alpha7))   // same style as 1–6
+            {
+                Debug.Log("7 pressed in InventoryController");
+
+                Debug.Log("Has rose: " + hasRose);
+
+                if (!hasRose)
+                {
+                    Debug.Log("Cannot turn in rose: player has no rose.");
+                    return;
+                }
+
+                if (BriarRose.Instance == null)
+                {
+                    Debug.LogWarning("No BriarRose.Instance found in scene.");
+                    return;
+                }
+
+                if (!BriarRose.Instance.inRoseRange)
+                {
+                    Debug.Log("Cannot turn in rose: not in BriarRose range.");
+                    return;
+                }
+
+                BriarRose.Instance.TurnInRose();
+                Debug.Log("TurnInRose() called on BriarRose");
+
+                if (PlayerController.inRosalinRange)
+                {
+                    FeedbackBanner.Instance.Show("Rosalin seems pleased with the rose.");
+                    PlayerController.hasGivenRose = true;
+                    MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take the pendant and key by the door and go.");
+                }
+            }
+
+            if (Input.GetKeyDown("8"))
+            {
+                if (hasToy)
+                {
+                    if (inCatRange)
+                    {
+                        if (canPlay)
+                        {
+                            //audioSource.PlayOneShot(PlayerController.catpurr);
+                            PlayerController.pSanity += 15;
+                            StartCoroutine(catCD());
+                            if (hasPlayed) { FeedbackBanner.Instance.Show("The cat seems excited to play again!"); }
+                            else if (!hasPlayed) { FeedbackBanner.Instance.Show("The cat seems quite pleased, let's follow it."); catWalk.StartWalkToDestination(); }
+                        }
+                        else if (!canPlay) { FeedbackBanner.Instance.Show("The cat seems tired of playing for now."); }
+                    }
+                    else { FeedbackBanner.Instance.Show("This is cute, but I'm not a cat."); }
+                }
+            }
         }
     }
 
@@ -285,5 +333,12 @@ public class InventoryController : MonoBehaviour
         audioSource.PlayOneShot(sizzleFire);
         yield return new WaitForSeconds(.5f);
         audioSource.PlayOneShot(fireSuccess);
+    }
+
+    private IEnumerator catCD()
+    {
+        canPlay = false;
+        yield return new WaitForSeconds(30f);
+        canPlay = true;
     }
 }

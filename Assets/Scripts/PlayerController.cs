@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
     [Header("Sanity")]
     public float pSanity = 100;
     public float pSanityMax = 100;
-    public float pSanityRegen = 2;
+    public float pSanityRegen = 1f;
     public bool sanityWarning;
     public bool sanityDanger;
     public bool sanityLost;
@@ -69,6 +69,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] CrosshairController CrosshairController;
     bool isFlashOn; //needed for entity dispersement
     public bool hasKey1;
+    public bool hasKey2;
     [SerializeField] private LayerMask interactLayerMask;
 
     [Header("Interaction UI")]
@@ -100,6 +101,8 @@ public class PlayerController : MonoBehaviour
     public GameObject PPV;
     bool ladderWarned;
     public Level2Manager Level2Manager;
+    public bool inRosalinRange;
+    public bool hasGivenRose;
 
     [Header("Audio")]
     AudioSource audioSource;
@@ -196,9 +199,7 @@ public class PlayerController : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
 
-        // Lock cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        LockMouse();      //locks mouse on start,, can be enabled/disabled via other scripts as needed
 
         sanityWarning = false;
         sanityDanger = false;
@@ -400,6 +401,23 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+    public void LockMouse()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        canMove = true;
+        lookAction.Enable();
+    }
+
+    public void UnlockMouse()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        canMove = false;
+        lookAction.Disable();
+    }
     void HandleInteraction()
     {
         if (!interactAction.WasPressedThisFrame())
@@ -416,7 +434,6 @@ public class PlayerController : MonoBehaviour
         if (distanceToTarget > interactRange)
         {
             FeedbackBanner.Instance.Show("I need to get closer.");
-            audioSource.PlayOneShot(norange);
             return;
         }
 
@@ -435,7 +452,6 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Picked up med pack via interact");
             InventoryController.medCharges++;
             FeedbackBanner.Instance.Show("Ah! A medpack. This seems useful.");
-            audioSource.PlayOneShot(medpack);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Lightbulb"))
@@ -443,7 +459,6 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Picked up lightbulb via interact");
             InventoryController.bulbCharges++;
             FeedbackBanner.Instance.Show("Thank god, another flashlight bulb.");
-            audioSource.PlayOneShot(bulb);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Laudanum"))
@@ -451,7 +466,6 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Picked up laudanum");
             InventoryController.laudanumCharges++;
             FeedbackBanner.Instance.Show("What a blessing, this should help me keep it together in here.");
-            audioSource.PlayOneShot(laudanum);
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Key1"))
@@ -474,13 +488,34 @@ public class PlayerController : MonoBehaviour
             }
             else { FeedbackBanner.Instance.Show("It's locked."); audioSource.PlayOneShot(locked); }
         }
+
+        else if (targetObject.CompareTag("Door2"))
+        {
+            if (hasKey2)
+            {
+                DoorController door = currentAimCollider.GetComponentInParent<DoorController>();
+
+                if (door != null)
+                {
+                    door.OpenDoor();
+                }
+            }
+            else { FeedbackBanner.Instance.Show("It's locked."); audioSource.PlayOneShot(locked); }
+        }
+
+        else if (targetObject.CompareTag("Key2"))
+        {
+            FeedbackBanner.Instance.Show("This must lead to one of the bedrooms.");
+            hasKey2 = true;
+            targetObject.SetActive(false);
+        }
+
         else if (targetObject.CompareTag("Canteen"))
         {
             targetObject.SetActive(false);
             hasCanteen = true;
             InventoryController.hasCanteen = true;
             InventoryController.canteenCount++;
-            audioSource.PlayOneShot(emptycanteen);
             FeedbackBanner.Instance.Show("If only this had some water in it.");
         }
         else if (targetObject.CompareTag("Fire"))
@@ -492,12 +527,11 @@ public class PlayerController : MonoBehaviour
         else if (targetObject.CompareTag("Water"))
         {
             Debug.Log("Water interacted with.");
-            if (!hasCanteen) { FeedbackBanner.Instance.Show("Ugh, this water is filthy!"); audioSource.PlayOneShot(waterfilthy); }
+            if (!hasCanteen) { FeedbackBanner.Instance.Show("Ugh, this water is filthy!"); }
             else if (hasCanteen)
             {
                 InventoryController.filledCanteenCount++;
                 FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it.");
-                audioSource.PlayOneShot(watersuccess);
             }
         }
         else if (targetObject.CompareTag("Matchbox"))
@@ -530,6 +564,21 @@ public class PlayerController : MonoBehaviour
                 Level2Manager.ApplyCheckpoint();
             }
         }
+        else if (targetObject.CompareTag("CatToy"))
+        {
+            FeedbackBanner.Instance.Show("A toy mouse... How cute.");
+            InventoryController.hasToy = true;
+            targetObject.SetActive(false);
+        }
+        else if (targetObject.CompareTag("Kitty"))
+        { 
+            FeedbackBanner.Instance.Show("*You pet the cat, it purrs happily.*");
+        }
+        else if (targetObject.CompareTag("Rosalin"))
+        {
+            if (!hasGivenRose) MiscFeedbackBanner.Instance.Show("I sense you have something of mine?");
+            else if (hasGivenRose) MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take this pendant and key by the door and go.");
+        }
     }
     public void TakeDmg()
     {
@@ -537,7 +586,6 @@ public class PlayerController : MonoBehaviour
         {
             pHP -= dmgToPC;
             FeedbackBanner.Instance.Show("Ah! I'm hurt!");
-            audioSource.PlayOneShot(hurt);
             Debug.Log("Player hp: " + pHP);
             StartCoroutine(iframe());
             HurtOverlay.Play();
@@ -643,12 +691,16 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = true; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
+        if (other.CompareTag("KittyRange")) { InventoryController.inCatRange = true; Debug.Log("In range: " + InventoryController.inCatRange); }
+        if (other.CompareTag("RosalinRange")) { inRosalinRange = true; Debug.Log("In Rosalin range: " + inRosalinRange); }
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = false; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
+        if (other.CompareTag("KittyRange")) { InventoryController.inCatRange = false; Debug.Log("In range: " + InventoryController.inCatRange); }
+        if (other.CompareTag("RosalinRange")) { inRosalinRange = false; Debug.Log("In Rosalin range: " + inRosalinRange); }
     }
 
     public void LightCandle()
