@@ -15,6 +15,7 @@ public class DeathSceneManager : MonoBehaviour
     public GameObject ConfirmEscPanel;
     public GameObject EscapeText;
     public PlayerController PlayerController;
+    public GameObject PLAYER;
     bool isDead;
     bool isEscOpen;
     bool confirmOpen;
@@ -110,7 +111,7 @@ public class DeathSceneManager : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.F4))
         {
             if (!confirmOpen) { ConfirmEscPanel.SetActive(true); confirmOpen = true; }
-            else if (confirmOpen) { Debug.Log("Quit confirmed"); SceneManager.LoadScene("MainMenu"); }
+            else if (confirmOpen) { Destroy(PLAYER); SceneManager.LoadScene("MainMenu");  }
         }
 
     }

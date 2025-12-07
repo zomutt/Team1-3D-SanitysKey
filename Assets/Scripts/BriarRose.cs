@@ -4,6 +4,9 @@ using System.Collections;
 
 public class BriarRose : MonoBehaviour
 {
+    /// <summary>
+    /// NOTE: THIS IS ON THE INTERACT SPOT OBJECT
+    /// </summary>
     public static BriarRose Instance { get; private set; }
 
     int dialogueStep;

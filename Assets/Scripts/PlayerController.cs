@@ -95,7 +95,11 @@ public class PlayerController : MonoBehaviour
     public GameObject particle4;
     public GameObject lightDoor;
     public GhostController GhostController;
-    public DeathSceneManager DeathSceneManager;
+    public UIPanelsManager UIPanelsManager;
+    bool deathMusPlayed;
+    public GameObject PPV;
+    bool ladderWarned;
+    public Level2Manager Level2Manager;
 
     [Header("Audio")]
     AudioSource audioSource;
@@ -123,10 +127,12 @@ public class PlayerController : MonoBehaviour
     public AudioClip DeathSequence;
     void Awake()
     {
+        InventoryController = FindFirstObjectByType<InventoryController>();
+        Level2Manager = FindFirstObjectByType<Level2Manager>();
         audioSource = GetComponent<AudioSource>();
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;            //needed for other scripts to easily reference the player
-        DontDestroyOnLoad(gameObject);        //WE PERSIST
+        //DontDestroyOnLoad(gameObject);        //WE PERSIST .......................  nvm
 
         // Move: WASD + gamepad left stick
         moveAction = new InputAction("Move", binding: "<Gamepad>/leftStick");
@@ -151,11 +157,13 @@ public class PlayerController : MonoBehaviour
         pHP = pHPMax;         //makes sure she's at full stats upon awake
         pStam = pStamMax;
         pSanity = pSanityMax;
+        deathMusPlayed = false;
         canJump = true;
         canDmg = true;
         hasKey1 = false;
         hasCanteen = false;
         stamRegen = 5f;        //i really should not have to hard code it this way but unity keeps setting it to .2 for some godforsaken reason if i dont
+        ladderWarned = false;
 
         characterController = GetComponent<CharacterController>();
         particle1.SetActive(false);
@@ -163,6 +171,8 @@ public class PlayerController : MonoBehaviour
         particle3.SetActive(false);
         particle4.SetActive(false);
         lightDoor.SetActive(false);
+
+        //PPV.SetActive(true);
     }
     void OnEnable()
     {
@@ -264,8 +274,8 @@ public class PlayerController : MonoBehaviour
             
             canMove = false;
             canJump = false;
-            DeathSceneManager.DeathScene();     //opens panel for it
-            audioSource.PlayOneShot(DeathSequence);
+            UIPanelsManager.DeathScene();     //opens panel for it
+            if (!deathMusPlayed) { audioSource.PlayOneShot(DeathSequence); deathMusPlayed = true; Destroy(gameObject); }
         }
 
 
@@ -508,6 +518,16 @@ public class PlayerController : MonoBehaviour
                 targetObject.SetActive(false);
                 InventoryController.hasRose = true;
                 InventoryController.roseImg.SetActive(true);
+            }
+        }
+        else if (targetObject.CompareTag("Ladder"))
+        {
+            if (!ladderWarned)
+            { FeedbackBanner.Instance.Show("I can climb this ladder, but I might not be able to return."); ladderWarned = true; }
+            else if (ladderWarned)
+            {
+                Level2Manager.SavePlayerStats();
+                Level2Manager.ApplyCheckpoint();
             }
         }
     }

@@ -127,7 +127,7 @@ public class InventoryController : MonoBehaviour
         {
             if (!flWarningTextShown)
             {
-                FeedbackBanner.Instance.Show("My light is running low. I better find a bulb soon.");
+                FeedbackBanner.Instance.Show("I need to find a bulb.");
                 audioSource.PlayOneShot(lightlow);
                 flWarningTextShown = true;
             }
@@ -138,7 +138,7 @@ public class InventoryController : MonoBehaviour
             flDirectionalLight.SetActive(false);
             if (!flOutTextShown)
             {
-                FeedbackBanner.Instance.Show("I need to find a light source NOW!");
+                FeedbackBanner.Instance.Show("I should have been looking for a bulb...");
                 audioSource.PlayOneShot(lightout);
                 flWarningTextShown = true;
             }
@@ -148,7 +148,7 @@ public class InventoryController : MonoBehaviour
         {
             if (flLife < 1)
             {
-                FeedbackBanner.Instance.Show("Ugh, the bulb on this is out.");
+                FeedbackBanner.Instance.Show("The bulb on this is out.");
                 audioSource.PlayOneShot(lightfail);
             }
             else if (!flashlightOn && flLife > 1)   // turn ON
@@ -180,13 +180,13 @@ public class InventoryController : MonoBehaviour
             {
                 PlayerController.pHP += medpackHeal;
                 Debug.Log("Player healed for: " + medpackHeal + " new HP: " + PlayerController.pHP);
-                FeedbackBanner.Instance.Show("Ah, that's much better.");
+                FeedbackBanner.Instance.Show("Much better.");
                 audioSource.PlayOneShot(healsuccess);
                 medCharges -= 1;
             }
             else if (medCharges < 1)
             {
-                FeedbackBanner.Instance.Show("I need to find more medpacks first.");
+                FeedbackBanner.Instance.Show("I need to find more medpacks");
                 audioSource.PlayOneShot(healfail);
             }
         }
@@ -195,7 +195,7 @@ public class InventoryController : MonoBehaviour
         {
             if (bulbCharges < 1)
             {
-                FeedbackBanner.Instance.Show("I need to find more lightbulbs first.");
+                FeedbackBanner.Instance.Show("I need to find more lightbulbs");
                 audioSource.PlayOneShot(bulbout);
             }
             else { flLife += bulbRestore; }
@@ -209,7 +209,7 @@ public class InventoryController : MonoBehaviour
             }
             else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
             {
-                FeedbackBanner.Instance.Show("Thankfully I don't need to use that yet.");
+                FeedbackBanner.Instance.Show("I don't need to use that yet.");
                 audioSource.PlayOneShot(laudanumfull);
             }
             else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
@@ -223,7 +223,7 @@ public class InventoryController : MonoBehaviour
         {
             if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0))
             {
-                filledCanteenCount++; FeedbackBanner.Instance.Show("Ugh, this water is filthy! Still, I'll fill my canteen with it.");
+                filledCanteenCount++; FeedbackBanner.Instance.Show("This water is gross, but I'll fill my canteen with it anyways.");
                 audioSource.PlayOneShot(PlayerController.watersuccess);
             }
             else if (filledCanteenCount > 0 && !inRangeCanteen)

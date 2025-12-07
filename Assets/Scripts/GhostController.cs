@@ -17,7 +17,7 @@ public class GhostController : MonoBehaviour
         tombstoneInteracted = false;
         ghostText.text = "";
         ghostGirl.SetActive(false);
-        ladder.SetActive(false);
+        //ladder.SetActive(false);
 
         // Auto-assign PlayerController
         if (PlayerController == null)
