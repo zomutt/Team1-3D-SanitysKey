@@ -46,6 +46,7 @@ TagManager:
   - FinalCandles
   - Altar
   - AltarRange
+  - AltarBook
   layers:
   - Default
   - TransparentFX

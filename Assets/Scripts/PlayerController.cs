@@ -103,6 +103,7 @@ public class PlayerController : MonoBehaviour
     public Level2Manager Level2Manager;
     public bool inRosalinRange;
     public bool hasGivenRose;
+    public FinalPuzzle FinalPuzzle;
 
     [Header("Audio")]
     AudioSource audioSource;
@@ -130,6 +131,7 @@ public class PlayerController : MonoBehaviour
     public AudioClip DeathSequence;
     void Awake()
     {
+        FinalPuzzle = FindFirstObjectByType<FinalPuzzle>();
         InventoryController = FindFirstObjectByType<InventoryController>();
         Level2Manager = FindFirstObjectByType<Level2Manager>();
         audioSource = GetComponent<AudioSource>();
@@ -579,6 +581,10 @@ public class PlayerController : MonoBehaviour
             if (!hasGivenRose) MiscFeedbackBanner.Instance.Show("I sense you have something of mine?");
             else if (hasGivenRose) MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take this pendant and key by the door and go.");
         }
+        else if (targetObject.CompareTag("AltarBook"))
+        {
+            FinalPuzzle.OpenAltarBook();
+        }
     }
     public void TakeDmg()
     {
@@ -687,12 +693,13 @@ public class PlayerController : MonoBehaviour
         return isNearEntity;
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("TubRange")) { InventoryController.inTubRange = true; Debug.Log("In range: " + InventoryController.inTubRange); }
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = true; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
         if (other.CompareTag("KittyRange")) { InventoryController.inCatRange = true; Debug.Log("In range: " + InventoryController.inCatRange); }
         if (other.CompareTag("RosalinRange")) { inRosalinRange = true; Debug.Log("In Rosalin range: " + inRosalinRange); }
+        if (other.CompareTag("AltarRange")) { FinalPuzzle.inAltarRange = true; }
     }
 
     private void OnTriggerExit(Collider other)
@@ -701,6 +708,7 @@ public class PlayerController : MonoBehaviour
         if (other.CompareTag("FireRange")) { InventoryController.inRangeCanteen = false; Debug.Log("In range: " + InventoryController.inRangeCanteen); }
         if (other.CompareTag("KittyRange")) { InventoryController.inCatRange = false; Debug.Log("In range: " + InventoryController.inCatRange); }
         if (other.CompareTag("RosalinRange")) { inRosalinRange = false; Debug.Log("In Rosalin range: " + inRosalinRange); }
+        if (other.CompareTag("AltarRange")) { FinalPuzzle.inAltarRange = false; }
     }
 
     public void LightCandle()

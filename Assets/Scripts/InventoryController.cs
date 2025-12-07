@@ -80,9 +80,12 @@ public class InventoryController : MonoBehaviour
     public BriarRose BriarRose;
 
     public GameObject helpPanel;
+
+    public FinalPuzzle FinalPuzzle;
     bool helpOpen;
     private void Awake()
     {
+        FinalPuzzle = FindFirstObjectByType<FinalPuzzle>();
         catWalk = FindFirstObjectByType<CatWalk>();
         audioSource = GetComponent<AudioSource>();
         flashlightOn = false;
@@ -317,6 +320,13 @@ public class InventoryController : MonoBehaviour
                         else if (!canPlay) { FeedbackBanner.Instance.Show("The cat seems tired of playing for now."); }
                     }
                     else { FeedbackBanner.Instance.Show("This is cute, but I'm not a cat."); }
+                }
+
+                if (FinalPuzzle.inAltarRange) 
+                { 
+                    FinalPuzzle.PlaceToy(); 
+                    hasToy = false;
+                    toyImg.SetActive(false);
                 }
             }
         }
