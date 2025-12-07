@@ -6,8 +6,10 @@ public class Candles : MonoBehaviour
     public bool isLit;
     public GhostController GhostController;
     public SconeManager SconeManager;
+    public FinalPuzzle FinalPuzzle;
     void Awake()
     {
+        FinalPuzzle = FindFirstObjectByType<FinalPuzzle>();
         // Auto-assign the flame if not set in the Inspector
         if (fireFX == null)
         {
@@ -22,6 +24,7 @@ public class Candles : MonoBehaviour
     public void LightCandle()
     { 
         if (gameObject.name == "Candle") { GhostController.candlesLit++; }
+        if (gameObject.name == "CandleF") { FinalPuzzle.finalCandleCount++; }
         if (gameObject.name == "scone1") { SconeManager.sconeString += "1"; SconeManager.sconeCount++; }
         if (gameObject.name == "scone2") { SconeManager.sconeString += "2"; SconeManager.sconeCount++; }
         if (gameObject.name == "scone3") { SconeManager.sconeString += "3"; SconeManager.sconeCount++; }

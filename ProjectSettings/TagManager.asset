@@ -43,6 +43,9 @@ TagManager:
   - CatToy
   - RosalinRange
   - Key3
+  - FinalCandles
+  - Altar
+  - AltarRange
   layers:
   - Default
   - TransparentFX
