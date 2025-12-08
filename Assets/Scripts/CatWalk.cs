@@ -5,12 +5,14 @@ public class CatWalk : MonoBehaviour
 {
     public CreatureMover creatureMover;
     public Transform destination;       //the mirror's position
-    public float stopDistance = 0.5f;
+    public float stopDistance = 3f;
 
     private bool isWalking;
+    public RosalinPuzzle RosalinPuzzle;
 
     private void Awake()
     {
+        RosalinPuzzle = FindFirstObjectByType<RosalinPuzzle>();
         if (creatureMover == null)
         {
             creatureMover = GetComponent<CreatureMover>();
@@ -34,7 +36,9 @@ public class CatWalk : MonoBehaviour
 
         if (distance <= stopDistance)
         {
+            MiscFeedbackBanner.Instance.Show("'Mew!' The cat seems quite interested in the mirror.");
             // Close enough -> stop
+            RosalinPuzzle.ActivateRosalin();
             creatureMover.SetInput(Vector2.zero,
                 transform.position + transform.forward,
                 isRun: false,

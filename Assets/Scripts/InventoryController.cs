@@ -49,25 +49,28 @@ public class InventoryController : MonoBehaviour
     public bool inCatRange;
     bool hasPlayed;
     public CatWalk catWalk;
-    
+    public bool hasPendant;
+    public GameObject pendantImg;
+    public GameObject watchImg;
+    public bool hasWatch;
 
 
     public bool canUseInv;   //sometimes the num keys should be disabled, e.g. during cutscenes, certain quests, etc.
 
     [Header("Audio")]
-    public AudioClip fireSuccess;
-    public AudioClip noneed;
-    public AudioClip lightout;
-    public AudioClip lightlow;
-    public AudioClip lightfail;
-    public AudioClip laudanumsuccess;
-    public AudioClip laudanumfail;
-    public AudioClip laudanumfull;
-    public AudioClip healsuccess;
-    public AudioClip healfail;
-    public AudioClip canteenfail;
-    public AudioClip bulbout;
-    public AudioClip flashlightSFX;
+    //public AudioClip fireSuccess;
+    //public AudioClip noneed;
+    //public AudioClip lightout;
+    //public AudioClip lightlow;
+    //public AudioClip lightfail;
+    //public AudioClip laudanumsuccess;
+    //public AudioClip laudanumfail;
+    //public AudioClip laudanumfull;
+    //public AudioClip healsuccess;
+    //public AudioClip healfail;
+    //public AudioClip canteenfail;
+    //public AudioClip bulbout;
+    //public AudioClip flashlightSFX;
     
 
     AudioSource audioSource;
@@ -82,17 +85,20 @@ public class InventoryController : MonoBehaviour
     public GameObject helpPanel;
 
     public FinalPuzzle FinalPuzzle;
+    public RosalinPuzzle RosalinPuzzle;
     bool helpOpen;
     private void Awake()
     {
+        RosalinPuzzle = FindFirstObjectByType<RosalinPuzzle>();
         FinalPuzzle = FindFirstObjectByType<FinalPuzzle>();
         catWalk = FindFirstObjectByType<CatWalk>();
         audioSource = GetComponent<AudioSource>();
-        flashlightOn = false;
         flDirectionalLight.SetActive(false);
         flWarningTextShown = false;
         flOutTextShown = false;
         hasMatches = false;
+        hasPendant = false;
+        pendantImg.SetActive(false);
         flLife = 100; //starts player with full charge bc we're nice :)
         if (SceneManager.GetActiveScene().name == "TestScene")
         {
@@ -111,6 +117,7 @@ public class InventoryController : MonoBehaviour
         helpPanel.SetActive(false);
         roseImg.SetActive(false);
         toyImg.SetActive(false);
+        watchImg.SetActive(false);
         canUseInv = true;
         canPlay = true;
         hasPlayed = false;
@@ -134,6 +141,7 @@ public class InventoryController : MonoBehaviour
         if (!hasMatches) { matchImg.SetActive(false); }
         if (hasMatches) { matchImg.SetActive(true); }
         if (hasToy) { toyImg.SetActive(true); }
+        if (hasPendant) { pendantImg.SetActive(true); }
 
         if (flashlightOn)
         {
@@ -150,7 +158,6 @@ public class InventoryController : MonoBehaviour
             if (!flWarningTextShown)
             {
                 FeedbackBanner.Instance.Show("I need to find a bulb.");
-                audioSource.PlayOneShot(lightlow);
                 flWarningTextShown = true;
             }
             flWarningTextShown = true;
@@ -160,25 +167,33 @@ public class InventoryController : MonoBehaviour
             flDirectionalLight.SetActive(false);
             if (!flOutTextShown)
             {
-                FeedbackBanner.Instance.Show("I should have been looking for a bulb...");
-                audioSource.PlayOneShot(lightout);
+                FeedbackBanner.Instance.Show("I should have been looking for bulbs...");
                 flWarningTextShown = true;
+                PlayerController.pSanity -= 100;      //instant sanity loss if flashlight dies,, gg
             }
         }
+
+        if (hasRose)
+        {
+            roseImg.SetActive(true);
+        }
+        else
+        {
+            roseImg.SetActive(false);
+        }
+
         if (canUseInv)
         {
-            if (Input.GetKeyDown("1"))
+            if (Input.GetKeyDown(KeyCode.Alpha1))
             {
                 if (flLife < 1)
                 {
                     FeedbackBanner.Instance.Show("The bulb on this is out.");
-                    audioSource.PlayOneShot(lightfail);
                 }
                 else if (!flashlightOn && flLife > 1)   // turn ON
                 {
                     flDirectionalLight.SetActive(true);
                     flashlightCone.SetActive(true);
-                    audioSource.PlayOneShot(flashlightSFX);
                     flashlightOn = true;
                     Debug.Log("Turning ON FL");
                 }
@@ -186,7 +201,6 @@ public class InventoryController : MonoBehaviour
                 {
                     flDirectionalLight.SetActive(false);
                     flashlightCone.SetActive(false);
-                    audioSource.PlayOneShot(flashlightSFX);
                     flashlightOn = false;
                     Debug.Log("Turning OFF FL");
                 }
@@ -197,20 +211,17 @@ public class InventoryController : MonoBehaviour
                 if (PlayerController.pHP >= 100)
                 {
                     FeedbackBanner.Instance.Show("I don't need to use that yet.");
-                    audioSource.PlayOneShot(noneed);
                 }
                 else if ((PlayerController.pHP < 100 && medCharges > 0))
                 {
                     PlayerController.pHP += medpackHeal;
                     Debug.Log("Player healed for: " + medpackHeal + " new HP: " + PlayerController.pHP);
                     FeedbackBanner.Instance.Show("Much better.");
-                    audioSource.PlayOneShot(healsuccess);
                     medCharges -= 1;
                 }
                 else if (medCharges < 1)
                 {
                     FeedbackBanner.Instance.Show("I need to find more medpacks");
-                    audioSource.PlayOneShot(healfail);
                 }
             }
 
@@ -219,7 +230,6 @@ public class InventoryController : MonoBehaviour
                 if (bulbCharges < 1)
                 {
                     FeedbackBanner.Instance.Show("I need to find more lightbulbs");
-                    audioSource.PlayOneShot(bulbout);
                 }
                 else { flLife += bulbRestore; }
             }
@@ -228,48 +238,53 @@ public class InventoryController : MonoBehaviour
                 if (laudanumCharges < 1)
                 {
                     FeedbackBanner.Instance.Show("I need to find more laudanum.");
-                    audioSource.PlayOneShot(laudanumfail);
                 }
                 else if (laudanumCharges > 0 && PlayerController.pSanity > 99)
                 {
                     FeedbackBanner.Instance.Show("I don't need to use that yet.");
-                    audioSource.PlayOneShot(laudanumfull);
                 }
                 else if (laudanumCharges > 0 && PlayerController.pSanity < 99)
                 {
                     FeedbackBanner.Instance.Show("Ah, I feel much more grounded now.");
-                    audioSource.PlayOneShot(laudanumsuccess);
                     PlayerController.pSanity += laudanumRestore;
                 }
             }
-            if (Input.GetKeyDown("5"))
+            if (Input.GetKeyDown("5"))       //canteen
             {
                 if (hasCanteen && inRangeCanteen && (filledCanteenCount == 0))
                 {
-                    filledCanteenCount++; FeedbackBanner.Instance.Show("This water is gross, but I'll fill my canteen with it anyways.");
-                    audioSource.PlayOneShot(PlayerController.watersuccess);
+                    filledCanteenCount++; 
+                    FeedbackBanner.Instance.Show("This water is gross, but I'll fill my canteen with it anyways.");
+                    audioSource.PlayOneShot(PlayerController.splash);
                 }
                 else if (filledCanteenCount > 0 && !inRangeCanteen)
                 {
                     Debug.Log("In range: " + inRangeCanteen);
                     FeedbackBanner.Instance.Show("Ew... I really shouldn't drink anything I find in here.");
-                    audioSource.PlayOneShot(canteenfail);
                 }
                 else if (filledCanteenCount > 0 && inRangeCanteen)
                 {
-                    FeedbackBanner.Instance.Show("Aha! I knew it. Let's check this out.");
+                    audioSource.PlayOneShot(sizzleFire);
+                    FeedbackBanner.Instance.Show("Aha! I knew this was the key to something. Let's check this out.");
                     canteenCount--;
                     fireParent.SetActive(false);
-                    StartCoroutine(successdelay());
                 }
             }
-            if (Input.GetKeyDown("6"))
+            if (Input.GetKeyDown("6"))     //matches
             {
                 if (hasMatches) PlayerController.Instance.LightCandle();
+                audioSource.PlayOneShot(PlayerController.match);
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha7))   // same style as 1–6
+            if (Input.GetKeyDown(KeyCode.Alpha7))   // same style as 1–6         //rose
             {
+                if (FinalPuzzle.inAltarRange)
+                {
+                    FinalPuzzle.PlaceRoses();
+                    hasRose = false;
+                    roseImg.SetActive(false);
+                }
+
                 Debug.Log("7 pressed in InventoryController");
 
                 Debug.Log("Has rose: " + hasRose);
@@ -295,15 +310,10 @@ public class InventoryController : MonoBehaviour
                 BriarRose.Instance.TurnInRose();
                 Debug.Log("TurnInRose() called on BriarRose");
 
-                if (PlayerController.inRosalinRange)
-                {
-                    FeedbackBanner.Instance.Show("Rosalin seems pleased with the rose.");
-                    PlayerController.hasGivenRose = true;
-                    MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take the pendant and key by the door and go.");
-                }
+
             }
 
-            if (Input.GetKeyDown("8"))
+            if (Input.GetKeyDown("8"))     //cat toy
             {
                 if (hasToy)
                 {
@@ -329,7 +339,37 @@ public class InventoryController : MonoBehaviour
                     toyImg.SetActive(false);
                 }
             }
+
+            if (Input.GetKeyDown("9"))        //pendant
+            {
+                if (FinalPuzzle.inAltarRange)
+                {
+                    FinalPuzzle.PlacePendant();
+                    hasToy = false;
+                    toyImg.SetActive(false);
+                }
+                else { FeedbackBanner.Instance.Show("This pendant looks important, but I don't see anywhere to use it right now."); }
+            }
+
+            if (Input.GetKeyDown("0"))        //watch
+            {
+                if (FinalPuzzle.inAltarRange)
+                {
+                    FinalPuzzle.PlaceWatch();
+                    hasWatch = false;
+                    watchImg.SetActive(false);
+                }
+                else { FeedbackBanner.Instance.Show("This watch looks important, but I don't see anywhere to use it right now."); }
+            }
         }
+    }
+
+    public void TurnOffFlashlight()
+    {
+        flDirectionalLight.SetActive(false);
+        flashlightCone.SetActive(false);
+        flashlightOn = false;
+        Debug.Log("Turning OFF FL");
     }
 
     private IEnumerator RoseCD()       //cd for sanity/stam restore
@@ -342,7 +382,6 @@ public class InventoryController : MonoBehaviour
     {
         audioSource.PlayOneShot(sizzleFire);
         yield return new WaitForSeconds(.5f);
-        audioSource.PlayOneShot(fireSuccess);
     }
 
     private IEnumerator catCD()

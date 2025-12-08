@@ -44,11 +44,11 @@ using UnityEngine;
                 open = !open;
                 asource.clip = open ? openDoor : closeDoor;
                 asource.Play();
-                FeedbackBanner.Instance.Show("Yes! It's open!");
+                FeedbackBanner.Instance.Show("It's open.");
             }
             else if (!PlayerController.hasKey1)
             {
-                FeedbackBanner.Instance.Show("It's locked, I must find a way through.");
+                FeedbackBanner.Instance.Show("It's locked.");
             }
         }
     }

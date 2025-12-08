@@ -12,25 +12,40 @@ public class SafeManager : MonoBehaviour, IInteractable
     bool safePanelOpen;
     [SerializeField] GameObject key;
     public InventoryController InventoryController;
+    public GameObject watch;
     bool hasOpened;
+    PlayerController PlayerController;
+    public AudioSource AudioSource;
+    public AudioClip scream;
+    bool canOpen;
 
     void Awake()
     {
-        InventoryController = FindObjectOfType<InventoryController>();
+        PlayerController = FindFirstObjectByType<PlayerController>();
+        InventoryController = FindFirstObjectByType<InventoryController>();
         safePanel.SetActive(false);
         key.SetActive(false);
+        watch.SetActive(false);
         hasOpened = false;
+        safePanelOpen = false;
+        canOpen = true;
     }
     public void Interact(PlayerController PlayerController)
     {
-        SafeSequence();
+        Debug.Log("Interacting with Safe");
+        if (canOpen)
+        { SafeSequence(); }
+        if (!canOpen) { return; Debug.Log("Error: cannot open"); }
     }
     void SafeSequence()
     {
-        safePanel.SetActive(true);
-        safePanelOpen = true;
-        PlayerController.Instance.UnlockMouse();
-        InventoryController.canUseInv = false;
+        if (canOpen)
+        {
+            safePanel.SetActive(true);
+            safePanelOpen = true;
+            PlayerController.Instance.UnlockMouse();
+            InventoryController.canUseInv = false;
+        }
     }
 
     public void OnClickSubmit()
@@ -40,15 +55,19 @@ public class SafeManager : MonoBehaviour, IInteractable
             if (combinationInput.text == correctCombination)
             {
                 key.SetActive(true);
+                watch.SetActive(true);
                 Debug.Log("Safe Unlocked!");
                 feedbackText.text = "Unlocked!";
                 hasOpened = true;
+                gameObject.tag = "Untagged";
             }
             else
             {
                 Debug.Log("Incorrect Combination. Try Again.");
                 ShowAndFade("Failed.");
+                PlayerController.pSanity -= 10;
                 combinationInput.text = "";
+                AudioSource.PlayOneShot(scream);
             }
         }
     }

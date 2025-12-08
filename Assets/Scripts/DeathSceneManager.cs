@@ -1,6 +1,7 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class DeathSceneManager : MonoBehaviour
 {
@@ -19,6 +20,9 @@ public class DeathSceneManager : MonoBehaviour
     bool isDead;
     bool isEscOpen;
     bool confirmOpen;
+    bool deathMusPlayed = false;
+    public AudioSource audioSource;
+    public AudioClip DeathSequence;
 
     private void Awake()
     {
@@ -26,6 +30,7 @@ public class DeathSceneManager : MonoBehaviour
         MainEscPanelParent.SetActive(false);
         isDead = false;
         EscapeText.SetActive(true);
+        deathMusPlayed = false;
     }
 
     public void DeathScene()
@@ -36,6 +41,11 @@ public class DeathSceneManager : MonoBehaviour
         ConfirmEscPanel.SetActive(false);
         isDead = true;
         confirmOpen = false;
+        if (!deathMusPlayed) 
+        { 
+            audioSource.PlayOneShot(DeathSequence); 
+            deathMusPlayed = true; 
+        }
     }
 
     private void Update()

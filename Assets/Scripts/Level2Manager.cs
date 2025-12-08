@@ -36,6 +36,7 @@ public class Level2Manager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         SceneManager.sceneLoaded += OnSceneLoaded;
+        hasTouched = false;
     }
 
     private void OnDestroy()

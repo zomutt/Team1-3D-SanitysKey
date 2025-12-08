@@ -70,7 +70,10 @@ public class PlayerController : MonoBehaviour
     bool isFlashOn; //needed for entity dispersement
     public bool hasKey1;
     public bool hasKey2;
+    public bool hasKey3;
+    public bool hasKeyFinal;
     [SerializeField] private LayerMask interactLayerMask;
+    bool canPet = true;
 
     [Header("Interaction UI")]
     Collider currentAimCollider;
@@ -79,10 +82,10 @@ public class PlayerController : MonoBehaviour
     [Header("Sanity - Entities")]
     [SerializeField] string entityTag = "Entity";
 
-    [SerializeField] float sanityLookDrainRate = 4f;   // /sec when staring
-    [SerializeField] float sanityLookRange = 10f;  // raycast distance
+    [SerializeField] float sanityLookDrainRate = 5f;   // /sec when staring
+    [SerializeField] float sanityLookRange = 20f;  // raycast distance
     [SerializeField] float sanityNearDrainRate = .5f;   // /sec when near
-    [SerializeField] float sanityNearRadius = 10f;  // sphere radius
+    [SerializeField] float sanityNearRadius = 7f;  // sphere radius
     [HideInInspector] bool proximityMessageShown;   // tracks if we've already shown the "watching me" text
     [HideInInspector] bool facingEntityMessageShown;   // tracks if we've shown the "staring" line
 
@@ -96,48 +99,36 @@ public class PlayerController : MonoBehaviour
     public GameObject particle4;
     public GameObject lightDoor;
     public GhostController GhostController;
-    public UIPanelsManager UIPanelsManager;
+    public DeathSceneManager DeathSceneManager;
     bool deathMusPlayed;
     public GameObject PPV;
     bool ladderWarned;
     public Level2Manager Level2Manager;
     public bool inRosalinRange;
-    public bool hasGivenRose;
+    public RosalinPuzzle RosalinPuzzle;
+    //public bool hasGivenRose;
     public FinalPuzzle FinalPuzzle;
 
     [Header("Audio")]
     AudioSource audioSource;
     public AudioClip sizzle;
-    public AudioClip fireSuccess;
-    public AudioClip sanity1;
-    public AudioClip sanity2;
-    public AudioClip sanity3;
-    public AudioClip nostam;
-    public AudioClip norange;
-    public AudioClip medpack;
-    public AudioClip watersuccess;
-    public AudioClip waterfilthy;
-    public AudioClip watching;
-    public AudioClip notinhead;
-    public AudioClip locked;
-    public AudioClip laudanum;
-    public AudioClip key;
-    public AudioClip hurt;
-    public AudioClip firecurious;
-    public AudioClip emptycanteen;
-    public AudioClip bulb;
+    public AudioClip scream;
     public AudioClip walkingSFX;
     public AudioClip runningSFX;
-    public AudioClip DeathSequence;
+    public AudioClip splash;
+    public AudioClip match;
+
     void Awake()
     {
+        DeathSceneManager = FindFirstObjectByType<DeathSceneManager>();
+        RosalinPuzzle = FindFirstObjectByType<RosalinPuzzle>();
         FinalPuzzle = FindFirstObjectByType<FinalPuzzle>();
         InventoryController = FindFirstObjectByType<InventoryController>();
         Level2Manager = FindFirstObjectByType<Level2Manager>();
         audioSource = GetComponent<AudioSource>();
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;            //needed for other scripts to easily reference the player
-        //DontDestroyOnLoad(gameObject);        //WE PERSIST .......................  nvm
+        //DontDestroyOnLoad(gameObject);        //WE PERSIST .......................  nvm no we dont,, breaks a lot of stuff
 
         // Move: WASD + gamepad left stick
         moveAction = new InputAction("Move", binding: "<Gamepad>/leftStick");
@@ -250,35 +241,38 @@ public class PlayerController : MonoBehaviour
         {
             // First stage: starting to slip
             FeedbackBanner.Instance.Show("What is... happening?");
-            audioSource.PlayOneShot(sanity1);
             sanityWarning = true;      // mark as shown until we above 40
         }
         else if (pSanity <= 20f && pSanity > 5f && !sanityDanger)
         {
             // Second stage: serious danger
             FeedbackBanner.Instance.Show("It's taking over...");
-            audioSource.PlayOneShot(sanity2);
             sanityDanger = true;       // mark as shown until above 20
         }
         else if (pSanity <= 5f && !sanityLost)
         {
             // Final stage: completely lost
-            audioSource.PlayOneShot(sanity3);
             FeedbackBanner.Instance.Show("It's over...");
             sanityLost = true;         // mark as shown until above 5
         }
 
 
-        if (pHP < 1 || pSanity < 1)       // GGEZ
+        if (pHP < 1.5f || pSanity < 1.5f)       // GGEZ
         {
+            //Debug.Log("Player has died.");
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             Time.timeScale = 1f;
             
             canMove = false;
             canJump = false;
-            UIPanelsManager.DeathScene();     //opens panel for it
-            if (!deathMusPlayed) { audioSource.PlayOneShot(DeathSequence); deathMusPlayed = true; Destroy(gameObject); }
+            DeathSceneManager.DeathScene();     //opens panel for it
+            
+        }
+
+        if (pSanity == 50 || pSanity == 20)
+        {
+            audioSource.PlayOneShot(scream);
         }
 
 
@@ -317,7 +311,6 @@ public class PlayerController : MonoBehaviour
         if (grounded && canMove && jumpAction.WasPressedThisFrame() && pStam < 10f)
         {
             FeedbackBanner.Instance.Show("I'm too tired for that.");
-            audioSource.PlayOneShot(nostam);
         }
         // Optional: keep controller “stuck” to ground/slopes
         if (grounded && moveDirection.y < 0f)
@@ -439,7 +432,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        IInteractable interactable = currentAimCollider.GetComponentInParent<IInteractable>();     //your programmer leveled tf upppp, interfaces are neat and basically tell the code to fire WITHOUT the need for an endless if/else chain
+        IInteractable interactable = currentAimCollider.GetComponentInParent<IInteractable>();     //your programmer leveled tf upppp, interfaces are neat and basically tell the code to fire WITHOUT the need for an endless if/else chain ....... when they are used
         if (interactable != null)
         {
             interactable.Interact(this);
@@ -456,6 +449,7 @@ public class PlayerController : MonoBehaviour
             FeedbackBanner.Instance.Show("Ah! A medpack. This seems useful.");
             targetObject.SetActive(false);
         }
+
         else if (targetObject.CompareTag("Lightbulb"))
         {
             Debug.Log("Picked up lightbulb via interact");
@@ -463,6 +457,7 @@ public class PlayerController : MonoBehaviour
             FeedbackBanner.Instance.Show("Thank god, another flashlight bulb.");
             targetObject.SetActive(false);
         }
+
         else if (targetObject.CompareTag("Laudanum"))
         {
             Debug.Log("Picked up laudanum");
@@ -470,13 +465,35 @@ public class PlayerController : MonoBehaviour
             FeedbackBanner.Instance.Show("What a blessing, this should help me keep it together in here.");
             targetObject.SetActive(false);
         }
+
         else if (targetObject.CompareTag("Key1"))
         {
             FeedbackBanner.Instance.Show("I wonder what this may be to.");
             hasKey1 = true;
-            audioSource.PlayOneShot(key);
             targetObject.SetActive(false);
         }
+
+        else if (targetObject.CompareTag("Key2"))
+        {
+            FeedbackBanner.Instance.Show("This must lead to the study.");
+            hasKey2 = true;
+            targetObject.SetActive(false);
+        }
+
+        else if (targetObject.CompareTag("Key3"))
+        {
+            FeedbackBanner.Instance.Show("This should take us to the master bedroom at last.");
+            hasKey3 = true;
+            targetObject.SetActive(false);
+        }
+
+        else if (targetObject.CompareTag("KeyFinal"))
+        {
+            FeedbackBanner.Instance.Show("This is it! The key to my escape!");
+            hasKeyFinal = true;
+            targetObject.SetActive(false);
+        }
+
         else if (targetObject.CompareTag("Door"))
         {
             if (hasKey1)
@@ -488,7 +505,7 @@ public class PlayerController : MonoBehaviour
                     door.OpenDoor();
                 }
             }
-            else { FeedbackBanner.Instance.Show("It's locked."); audioSource.PlayOneShot(locked); }
+            else { FeedbackBanner.Instance.Show("It's locked."); }
         }
 
         else if (targetObject.CompareTag("Door2"))
@@ -502,14 +519,35 @@ public class PlayerController : MonoBehaviour
                     door.OpenDoor();
                 }
             }
-            else { FeedbackBanner.Instance.Show("It's locked."); audioSource.PlayOneShot(locked); }
+            else { FeedbackBanner.Instance.Show("It's locked."); }
         }
 
-        else if (targetObject.CompareTag("Key2"))
+        else if (targetObject.CompareTag("Door3"))
         {
-            FeedbackBanner.Instance.Show("This must lead to one of the bedrooms.");
-            hasKey2 = true;
-            targetObject.SetActive(false);
+            if (hasKey3)
+            {
+                DoorController door = currentAimCollider.GetComponentInParent<DoorController>();
+
+                if (door != null)
+                {
+                    door.OpenDoor();
+                }
+            }
+            else { FeedbackBanner.Instance.Show("It's locked."); }
+        }
+
+        else if (targetObject.CompareTag("DoorFinal"))
+        {
+            if (hasKeyFinal)
+            {
+                DoorController door = currentAimCollider.GetComponentInParent<DoorController>();
+
+                if (door != null)
+                {
+                    door.OpenDoor();
+                }
+            }
+            else { FeedbackBanner.Instance.Show("It's locked."); }
         }
 
         else if (targetObject.CompareTag("Canteen"))
@@ -523,7 +561,7 @@ public class PlayerController : MonoBehaviour
         else if (targetObject.CompareTag("Fire"))
         {
             Debug.Log("Fire interacted.");
-            if (InventoryController.canteenCount == 0) { FeedbackBanner.Instance.Show("That's odd, I thought this place was abandoned. Could this be the key to something?"); audioSource.PlayOneShot(firecurious); }
+            if (InventoryController.canteenCount == 0) { FeedbackBanner.Instance.Show("That's odd, I thought this place was abandoned. Could this be the key to something?"); }
         }
 
         else if (targetObject.CompareTag("Water"))
@@ -559,7 +597,7 @@ public class PlayerController : MonoBehaviour
         else if (targetObject.CompareTag("Ladder"))
         {
             if (!ladderWarned)
-            { FeedbackBanner.Instance.Show("I can climb this ladder, but I might not be able to return."); ladderWarned = true; }
+            { FeedbackBanner.Instance.Show("I can climb this ladder, but I might not be able to return. It's slippery, I must keep trying if I fall off."); ladderWarned = true; }
             else if (ladderWarned)
             {
                 Level2Manager.SavePlayerStats();
@@ -573,17 +611,47 @@ public class PlayerController : MonoBehaviour
             targetObject.SetActive(false);
         }
         else if (targetObject.CompareTag("Kitty"))
-        { 
+        {
             FeedbackBanner.Instance.Show("*You pet the cat, it purrs happily.*");
+            pSanity += 5f;
         }
         else if (targetObject.CompareTag("Rosalin"))
         {
-            if (!hasGivenRose) MiscFeedbackBanner.Instance.Show("I sense you have something of mine?");
-            else if (hasGivenRose) MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take this pendant and key by the door and go.");
+            Debug.Log("Rosalin interacted");
+            if (RosalinPuzzle.isRosalinPresent)
+            {
+                if (!RosalinPuzzle.hasGivenRose)
+                {
+                    MiscFeedbackBanner.Instance.Show("I sense you have something of mine?");
+                }
+                else if (RosalinPuzzle.hasGivenRose)
+                {
+                    MiscFeedbackBanner.Instance.Show("Thank you for bringing me my rose, you must have met my daughter... You should leave, take this pendant and key by the door and go.");
+                }
+            }
+
+            else if (!RosalinPuzzle.isRosalinPresent)
+            {
+                FeedbackBanner.Instance.Show("What a beautiful mirror, yet it feels so haunting.");
+            }
         }
+
         else if (targetObject.CompareTag("AltarBook"))
         {
             FinalPuzzle.OpenAltarBook();
+        }
+
+        else if (targetObject.CompareTag("Pendant"))
+        {
+            targetObject.SetActive(false);
+            InventoryController.hasPendant = true;
+        }
+
+        else if (targetObject.CompareTag("Pocketwatch"))
+        {
+            targetObject.SetActive(false);
+            InventoryController.hasWatch = true;
+            FeedbackBanner.Instance.Show("A beautiful pocket watch engraved with a raven holding a key... A symbol of wisdom and freedom, yet also haunting duality.");
         }
     }
     public void TakeDmg()
@@ -605,6 +673,12 @@ public class PlayerController : MonoBehaviour
         canDmg = true;
     }
 
+    IEnumerator catCD()
+    {
+        canPet = false;
+        yield return new WaitForSeconds(10f);
+        canPet = true;  
+    }
     // Returns true if we are currently looking at an Entity
     bool UpdateSanityFacingEntity()
     {
@@ -638,7 +712,6 @@ public class PlayerController : MonoBehaviour
             if (!facingEntityMessageShown)
             {
                 FeedbackBanner.Instance.Show("No way that's *not* just in my head... I wish it was, though.");
-                audioSource.PlayOneShot(notinhead);
                 facingEntityMessageShown = true;
             }
         }
@@ -673,14 +746,13 @@ public class PlayerController : MonoBehaviour
         if (isNearEntity)
         {
             // slow sanity drain
-            pSanity -= 0.5f * Time.deltaTime;
+            pSanity -= 1f * Time.deltaTime;
             if (pSanity < 0f) pSanity = 0f;
 
             // only show the message ONCE while we're in range
             if (!proximityMessageShown)
             {
                 FeedbackBanner.Instance.Show("Is something... watching me?");
-                audioSource.PlayOneShot(watching);
                 proximityMessageShown = true;
             }
         }
@@ -723,7 +795,6 @@ public class PlayerController : MonoBehaviour
         if (distanceToTarget > interactRange) 
         { 
             FeedbackBanner.Instance.Show("I need to get closer."); 
-            audioSource.PlayOneShot(norange); 
             return; 
         }
 

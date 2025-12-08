@@ -10,7 +10,7 @@ public class SanityOverlay : MonoBehaviour
     [SerializeField] Image overlayImage;
 
     [Header("Sanity thresholds")]
-    [SerializeField] float startFadeSanity = 70f;  // overlay starts at or below this sanity
+    [SerializeField] float startFadeSanity = 90f;  // overlay starts at or below this sanity
     [SerializeField] float fullFadeSanity = 5f;   // overlay maxes out at this sanity
     [SerializeField] float maxAlpha = 1f;   // strongest opacity
 
